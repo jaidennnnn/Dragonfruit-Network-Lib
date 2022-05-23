@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import gg.dragonfruit.network.Connection;
 import gg.dragonfruit.network.NetworkLibrary;
+import gg.dragonfruit.network.listener.ConnectionListener;
 import gg.dragonfruit.network.packet.PublicKeyPacket;
 
 public class ConnectionList extends ConcurrentLinkedQueue<Connection> {
@@ -46,6 +47,11 @@ public class ConnectionList extends ConcurrentLinkedQueue<Connection> {
             connection.sendPacket(new PublicKeyPacket(publicKey, true));
             this.add(connection);
             connection.awaitPublicKey();
+
+            for (ConnectionListener listener : ConnectionListener.getListeners()) {
+                listener.connected(connection);
+            }
+
             return connection;
         });
     }
@@ -53,6 +59,10 @@ public class ConnectionList extends ConcurrentLinkedQueue<Connection> {
     public void disconnect(Connection connection) throws UnknownHostException {
         for (Connection c : this) {
             if (c.getAddress().equals(connection.getAddress()) && c.getPort() == connection.getPort()) {
+                for (ConnectionListener listener : ConnectionListener.getListeners()) {
+                    listener.disconnected(connection);
+                }
+
                 this.remove(connection);
                 break;
             }
