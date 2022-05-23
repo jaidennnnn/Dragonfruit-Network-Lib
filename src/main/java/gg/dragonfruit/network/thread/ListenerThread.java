@@ -65,21 +65,23 @@ public class ListenerThread extends Thread {
                 received = PacketUtil.deserializePacket(datagramPacket.getData());
             } catch (ClassNotFoundException | IOException e) {
                 e.printStackTrace();
+                isBusy = false;
                 continue;
             }
 
-            Connection connection = NetworkLibrary.getConnected().get(address, port);
+            Connection connection = NetworkLibrary.getConnections().get(address, port);
 
             if (connection == null) {
+                isBusy = false;
                 continue;
             }
 
             if (received instanceof EncryptedPacket) {
                 EncryptedPacket encryptedPacket = (EncryptedPacket) received;
-                encryptedPacket.decrypt(connection.getPublicKey());
+                encryptedPacket.decrypt(connection);
             }
 
-            received.recieved(connection);
+            received.received(connection);
 
             isBusy = false;
         }

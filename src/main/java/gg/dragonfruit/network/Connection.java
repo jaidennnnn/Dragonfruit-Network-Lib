@@ -1,18 +1,22 @@
 package gg.dragonfruit.network;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.util.concurrent.CompletableFuture;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.EncryptedPacket;
 import gg.dragonfruit.network.packet.Packet;
+import gg.dragonfruit.network.packet.PublicKeyPacket;
 
 public class Connection {
     final InetAddress address;
     final int port;
     BigInteger publicKey;
     EndToEndEncryption endToEndEncryption = new EndToEndEncryption();
-    long lastKeepAliveRecieved = 0;
+    long lastKeepAliveReceived = 0;
+    boolean waitingForPublicKey = true;
 
     public Connection(InetAddress address, int port) {
         this.address = address;
@@ -32,9 +36,11 @@ public class Connection {
     }
 
     public void sendEncryptedPacket(EncryptedPacket packet) {
-        packet.encrypt(NetworkLibrary.getPacketTransmitter().getConnection().getPublicKey());
-        NetworkLibrary.getPacketTransmitter().sendPacket(packet,
-                this);
+        sendPacket(new PublicKeyPacket(publicKey, true));
+        awaitPublicKeyAsync().whenComplete((func, exception) -> {
+            packet.encrypt(this);
+            sendPacket(packet);
+        });
     }
 
     public void sendPacket(Packet packet) {
@@ -45,12 +51,27 @@ public class Connection {
         return address;
     }
 
-    public void keepAlive() {
-        lastKeepAliveRecieved = System.currentTimeMillis();
+    public boolean checkConnection() {
+        try {
+            return address.isReachable(3000);
+        } catch (IOException e) {
+            return false;
+        }
     }
 
-    public boolean timedOut() {
-        return System.currentTimeMillis() - lastKeepAliveRecieved > 3000;
+    public CompletableFuture<Void> awaitPublicKeyAsync() {
+        return CompletableFuture.runAsync(() -> awaitPublicKey());
+    }
+
+    public void awaitPublicKey() {
+        this.waitingForPublicKey = true;
+        while (waitingForPublicKey) {
+
+        }
+    }
+
+    public void receivedPublicKey() {
+        this.waitingForPublicKey = false;
     }
 
     public int getPort() {

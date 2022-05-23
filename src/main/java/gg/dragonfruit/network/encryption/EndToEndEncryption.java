@@ -13,7 +13,7 @@ public class EndToEndEncryption {
     /**
      * Generates a new private key and uses it to calculate the public key. This key
      * should be sent to the other user and used to decrypt the message once
-     * recieved.
+     * received.
      * 
      * @return a new public key.
      */

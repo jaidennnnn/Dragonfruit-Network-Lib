@@ -1,10 +1,10 @@
 package gg.dragonfruit.network.packet;
 
-import java.math.BigInteger;
+import gg.dragonfruit.network.Connection;
 
 public abstract class EncryptedPacket extends Packet {
 
-    public abstract void encrypt(BigInteger otherPublicKey);
+    public abstract void encrypt(Connection recipient);
 
-    public abstract void decrypt(BigInteger otherPublicKey);
+    public abstract void decrypt(Connection sender);
 }

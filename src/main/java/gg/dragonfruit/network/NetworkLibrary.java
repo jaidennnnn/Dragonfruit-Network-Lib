@@ -6,7 +6,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import gg.dragonfruit.network.collection.ConnectionList;
 
 public final class NetworkLibrary {
-    static PacketTransmitter packetTransmitter = new PacketTransmitter();
+    static PacketTransmitter packetTransmitter;
     static ConnectionList connected = new ConnectionList();
     public static ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor();
 
@@ -14,11 +14,17 @@ public final class NetworkLibrary {
         return packetTransmitter;
     }
 
-    public static ConnectionList getConnected() {
+    public static ConnectionList getConnections() {
         return connected;
     }
 
     public static void start() {
+        packetTransmitter = new PacketTransmitter();
+        packetTransmitter.start();
+    }
+
+    public static void start(int port) {
+        packetTransmitter = new PacketTransmitter(port, Runtime.getRuntime().availableProcessors());
         packetTransmitter.start();
     }
 
