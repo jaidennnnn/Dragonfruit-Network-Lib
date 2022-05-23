@@ -77,4 +77,15 @@ public class Connection {
     public int getPort() {
         return port;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof Connection) {
+            Connection c = (Connection) o;
+
+            return c.getAddress().equals(address) && c.getPort() == port;
+        }
+
+        return false;
+    }
 }
