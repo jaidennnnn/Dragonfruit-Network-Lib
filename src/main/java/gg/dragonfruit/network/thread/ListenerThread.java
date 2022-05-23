@@ -78,7 +78,8 @@ public class ListenerThread extends Thread {
 
             if (received instanceof EncryptedPacket) {
                 EncryptedPacket encryptedPacket = (EncryptedPacket) received;
-                encryptedPacket.decrypt(connection);
+                encryptedPacket.decrypt(NetworkLibrary.getPacketTransmitter().getConnection().getEndToEndEncryption(),
+                        connection.getPublicKey());
             }
 
             received.received(connection);

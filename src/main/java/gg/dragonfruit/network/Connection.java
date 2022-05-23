@@ -38,7 +38,8 @@ public class Connection {
     public void sendEncryptedPacket(EncryptedPacket packet) {
         sendPacket(new PublicKeyPacket(publicKey, true));
         awaitPublicKeyAsync().whenComplete((func, exception) -> {
-            packet.encrypt(this);
+            packet.encrypt(NetworkLibrary.getPacketTransmitter().getConnection().getEndToEndEncryption(),
+                    this.getPublicKey());
             sendPacket(packet);
         });
     }
@@ -76,6 +77,10 @@ public class Connection {
 
     public int getPort() {
         return port;
+    }
+
+    public EndToEndEncryption getEndToEndEncryption() {
+        return endToEndEncryption;
     }
 
     @Override
