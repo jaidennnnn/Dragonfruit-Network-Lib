@@ -59,10 +59,10 @@ public class EndToEndEncryption {
         return currentNumber = currentNumber.abs();
     }
 
-    private String offsetMap(String s) {
+    private String offsetMap(int totalLength) {
         StringBuilder sb = new StringBuilder();
 
-        while (sb.length() < s.length()) {
+        while (sb.length() < totalLength) {
             sb.append(nextNumber().toString());
         }
 
@@ -79,7 +79,7 @@ public class EndToEndEncryption {
     public String encrypt(String string, BigInteger otherPublicKey) {
         this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
         this.currentNumber = sharedKey;
-        String offsetMap = offsetMap(string);
+        String offsetMap = offsetMap(string.length());
 
         StringBuilder sb = new StringBuilder();
 
@@ -87,7 +87,6 @@ public class EndToEndEncryption {
             sb.append((char) (string.charAt(i) + Integer.parseInt(new String(new char[] { offsetMap.charAt(i) }))));
         }
 
-        this.currentNumber = sharedKey;
         return sb.toString();
     }
 
@@ -101,7 +100,7 @@ public class EndToEndEncryption {
     public String decrypt(String string, BigInteger otherPublicKey) {
         this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
         this.currentNumber = sharedKey;
-        String offsetMap = offsetMap(string);
+        String offsetMap = offsetMap(string.length());
 
         StringBuilder sb = new StringBuilder();
 
@@ -109,7 +108,78 @@ public class EndToEndEncryption {
             sb.append((char) (string.charAt(i) - Integer.parseInt(new String(new char[] { offsetMap.charAt(i) }))));
         }
 
-        this.currentNumber = sharedKey;
         return sb.toString();
+    }
+
+    /**
+     * Encrypts the given strings in order.
+     *
+     * @param s              the strings to be encrypted.
+     * @param otherPublicKey the other user's public key.
+     * @return the encrypted strings.
+     */
+    public String[] encrypt(BigInteger otherPublicKey, String... s) {
+        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
+        this.currentNumber = sharedKey;
+        int totalLength = 0;
+
+        for (String string : s) {
+            totalLength += string.length();
+        }
+
+        String offsetMap = offsetMap(totalLength);
+
+        String[] result = new String[s.length];
+
+        int o = 0;
+        for (int p = 0; p < s.length; p++) {
+            String string = s[p];
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < string.length(); i++) {
+                sb.append((char) (string.charAt(i) + Integer.parseInt(new String(new char[] { offsetMap.charAt(o) }))));
+                o++;
+            }
+
+            result[p] = sb.toString();
+        }
+
+        return result;
+    }
+
+    /**
+     * Decrypts the given strings in order.
+     *
+     * @param s              the strings to be decrypted.
+     * @param otherPublicKey the other user's public key.
+     * @return the decrypted strings.
+     */
+    public String[] decrypt(BigInteger otherPublicKey, String... s) {
+        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
+        this.currentNumber = sharedKey;
+        int totalLength = 0;
+
+        for (String string : s) {
+            totalLength += string.length();
+        }
+
+        String offsetMap = offsetMap(totalLength);
+
+        String[] result = new String[s.length];
+
+        int o = 0;
+        for (int p = 0; p < s.length; p++) {
+            String string = s[p];
+            StringBuilder sb = new StringBuilder();
+
+            for (int i = 0; i < string.length(); i++) {
+                sb.append((char) (string.charAt(i) - Integer.parseInt(new String(new char[] { offsetMap.charAt(o) }))));
+                o++;
+            }
+
+            result[p] = sb.toString();
+        }
+
+        return result;
     }
 }
