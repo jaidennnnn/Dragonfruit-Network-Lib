@@ -112,6 +112,52 @@ public class EndToEndEncryption {
     }
 
     /**
+     * Encrypts the given long value.
+     *
+     * @param longValue      the long value to be encrypted.
+     * @param otherPublicKey the other user's public key.
+     * @return the encrypted long.
+     */
+    public long encrypt(long longValue, BigInteger otherPublicKey) {
+        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
+        this.currentNumber = sharedKey;
+        String string = "" + longValue;
+        String offsetMap = offsetMap(string.length());
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < string.length(); i++) {
+            sb.append((int) (Integer.valueOf(string.charAt(i))
+                    + Integer.parseInt(new String(new char[] { offsetMap.charAt(i) }))));
+        }
+
+        return Long.valueOf(sb.toString());
+    }
+
+    /**
+     * Decrypts the given long value.
+     *
+     * @param longValue      the long value to be decrypted.
+     * @param otherPublicKey the other user's public key.
+     * @return the decrypted long.
+     */
+    public long decrypt(long longValue, BigInteger otherPublicKey) {
+        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
+        this.currentNumber = sharedKey;
+        String string = "" + longValue;
+        String offsetMap = offsetMap(string.length());
+
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < string.length(); i++) {
+            sb.append((int) (Integer.valueOf(string.charAt(i))
+                    - Integer.parseInt(new String(new char[] { offsetMap.charAt(i) }))));
+        }
+
+        return Long.valueOf(sb.toString());
+    }
+
+    /**
      * Encrypts the given strings in order.
      *
      * @param s              the strings to be encrypted.
@@ -128,7 +174,6 @@ public class EndToEndEncryption {
         }
 
         String offsetMap = offsetMap(totalLength);
-
         String[] result = new String[s.length];
 
         int o = 0;
@@ -164,7 +209,6 @@ public class EndToEndEncryption {
         }
 
         String offsetMap = offsetMap(totalLength);
-
         String[] result = new String[s.length];
 
         int o = 0;
