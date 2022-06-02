@@ -46,7 +46,7 @@ public class ListenerThread extends Thread {
                 try {
                     Thread.sleep(Long.MAX_VALUE);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+
                 }
                 continue;
             }
