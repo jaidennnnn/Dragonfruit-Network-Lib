@@ -29,6 +29,7 @@ public class ListenerThread extends Thread {
 
     public void awaken() {
         sleeping = false;
+        this.interrupt();
     }
 
     public boolean isBusy() {
@@ -42,6 +43,11 @@ public class ListenerThread extends Thread {
     public void run() {
         while (active) {
             if (sleeping) {
+                try {
+                    Thread.sleep(Long.MAX_VALUE);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 continue;
             }
 
