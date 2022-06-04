@@ -3,7 +3,10 @@ package gg.dragonfruit.network;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
+
+import org.snf4j.core.session.IDatagramSession;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.EncryptedPacket;
@@ -11,16 +14,31 @@ import gg.dragonfruit.network.packet.Packet;
 import gg.dragonfruit.network.packet.PublicKeyPacket;
 
 public class Connection {
-    final InetAddress address;
-    final int port;
+    final InetSocketAddress socketAddress;
     BigInteger publicKey;
     EndToEndEncryption endToEndEncryption = new EndToEndEncryption();
     long lastKeepAliveReceived = 0;
+    IDatagramSession session;
     boolean waitingForPublicKey = true;
 
     public Connection(InetAddress address, int port) {
-        this.address = address;
-        this.port = port;
+        this.socketAddress = new InetSocketAddress(address, port);
+    }
+
+    public Connection(InetSocketAddress socketAddress) {
+        this.socketAddress = socketAddress;
+    }
+
+    public void setSession(IDatagramSession session) {
+        this.session = session;
+    }
+
+    public IDatagramSession getSession() {
+        return this.session;
+    }
+
+    public InetSocketAddress getSocketAddress() {
+        return socketAddress;
     }
 
     public void setPublicKey(BigInteger publicKey) {
@@ -49,12 +67,12 @@ public class Connection {
     }
 
     public InetAddress getAddress() {
-        return address;
+        return socketAddress.getAddress();
     }
 
     public boolean checkConnection() {
         try {
-            return address.isReachable(3000);
+            return getAddress().isReachable(3000);
         } catch (IOException e) {
             return false;
         }
@@ -76,7 +94,7 @@ public class Connection {
     }
 
     public int getPort() {
-        return port;
+        return socketAddress.getPort();
     }
 
     public EndToEndEncryption getEndToEndEncryption() {
@@ -88,7 +106,7 @@ public class Connection {
         if (o instanceof Connection) {
             Connection c = (Connection) o;
 
-            return c.getAddress().equals(address) && c.getPort() == port;
+            return c.getAddress().equals(getAddress()) && c.getPort() == getPort();
         }
 
         return false;

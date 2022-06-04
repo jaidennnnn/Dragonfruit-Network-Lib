@@ -1,108 +1,102 @@
 package gg.dragonfruit.network;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.DatagramChannel;
 
-import gg.dragonfruit.network.collection.GlueList;
+import org.snf4j.core.DatagramServerHandler;
+import org.snf4j.core.SelectorLoop;
+import org.snf4j.core.factory.IDatagramHandlerFactory;
+import org.snf4j.core.handler.IDatagramHandler;
+import org.snf4j.core.session.IDatagramSession;
+
 import gg.dragonfruit.network.packet.Packet;
-import gg.dragonfruit.network.thread.ListenerThread;
+import gg.dragonfruit.network.util.DatagramChannelBuilder;
 import gg.dragonfruit.network.util.PacketUtil;
 
-public class PacketTransmitter extends Thread {
-    DatagramSocket socket;
+public class PacketTransmitter {
     Connection connection;
+    DatagramChannel channel;
     boolean isActive = true;
-    List<ListenerThread> listenerThreads;
-    ListenerThread currentListenerThread = null;
-    int threadCount;
+    SelectorLoop loop;
 
-    public PacketTransmitter(int port, int threadCount) {
+    public PacketTransmitter(int port) {
+        InetSocketAddress address = new InetSocketAddress("localhost", port);
         try {
-            socket = new DatagramSocket(port);
-        } catch (SocketException e) {
+            channel = DatagramChannelBuilder.bindChannel(address);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+            return;
+        }
+
+        try {
+            loop = new SelectorLoop();
+        } catch (IOException e) {
             e.printStackTrace();
             return;
         }
 
-        this.connection = new Connection(socket.getInetAddress(), port);
-        this.threadCount = threadCount;
-        this.listenerThreads = new GlueList<ListenerThread>(threadCount);
-    }
-
-    public PacketTransmitter(int threadCount) {
-        try {
-            socket = new DatagramSocket();
-        } catch (SocketException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        this.connection = new Connection(socket.getInetAddress(), socket.getPort());
-        this.threadCount = threadCount;
-        this.listenerThreads = new GlueList<ListenerThread>(threadCount);
+        this.connection = new Connection(address.getAddress(), port);
     }
 
     public PacketTransmitter() {
-        this(Runtime.getRuntime().availableProcessors());
+        InetSocketAddress address = new InetSocketAddress(0);
+
+        try {
+            channel = DatagramChannelBuilder.bindChannel(address);
+        } catch (IOException e1) {
+            e1.printStackTrace();
+            return;
+        }
+
+        try {
+            loop = new SelectorLoop();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        this.connection = new Connection(address.getAddress(), address.getPort());
     }
 
     public Connection getConnection() {
         return connection;
     }
 
-    public void close() {
-        this.isActive = false;
-        socket.close();
+    public void stop() {
+        loop.stop();
     }
 
-    @Override
-    public void run() {
+    public void start() {
+        loop.start();
 
-        for (int i = 0; i < threadCount; i++) {
-            ListenerThread thread = new ListenerThread(socket);
-            thread.start();
-            listenerThreads.add(thread);
-        }
+        try {
+            loop.register(channel, new DatagramServerHandler(new IDatagramHandlerFactory() {
 
-        currentListenerThread = listenerThreads.get(0);
-        currentListenerThread.awaken();
-
-        while (isActive) {
-            if (!currentListenerThread.isBusy()) {
-                continue;
-            }
-
-            currentListenerThread.sleep();
-
-            for (ListenerThread thread : listenerThreads) {
-                if (thread.isBusy()) {
-                    continue;
+                @Override
+                public IDatagramHandler create(SocketAddress remoteAddress) {
+                    return new PacketHandler();
                 }
 
-                currentListenerThread = thread;
-                currentListenerThread.awaken();
-            }
+            }));
+        } catch (ClosedChannelException e) {
+            e.printStackTrace();
         }
 
-        for (ListenerThread thread : listenerThreads) {
-            thread.shutdown();
-            thread.awaitCompletion();
-        }
-
-        socket.close();
     }
 
     public void sendPacket(Packet packet, Connection connection) {
-        try {
-            byte[] data = PacketUtil.serializePacket(packet);
-            DatagramPacket datagramPacket = new DatagramPacket(data, data.length, connection.getAddress(),
-                    connection.getPort());
-            socket.send(datagramPacket);
-        } catch (IOException e) {
-            e.printStackTrace();
+        IDatagramSession session = connection.getSession();
+
+        if (session != null) {
+            try {
+                session.write(PacketUtil.serializePacket(packet));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
+
 }

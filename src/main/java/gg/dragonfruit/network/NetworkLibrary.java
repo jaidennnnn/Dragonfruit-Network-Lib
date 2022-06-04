@@ -14,6 +14,10 @@ public final class NetworkLibrary {
         return packetTransmitter;
     }
 
+    public static void main(String[] args) throws Exception {
+        start();
+    }
+
     public static ConnectionList getConnections() {
         return connected;
     }
@@ -24,11 +28,11 @@ public final class NetworkLibrary {
     }
 
     public static void start(int port) {
-        packetTransmitter = new PacketTransmitter(port, Runtime.getRuntime().availableProcessors());
+        packetTransmitter = new PacketTransmitter(port);
         packetTransmitter.start();
     }
 
     public static void stop() {
-        packetTransmitter.close();
+        packetTransmitter.stop();
     }
 }
