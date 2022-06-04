@@ -1,12 +1,13 @@
 package gg.dragonfruit.network;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import gg.dragonfruit.network.collection.ConnectionList;
 
 public final class NetworkLibrary {
-    static PacketTransmitter packetTransmitter;
+    static PacketTransmitter packetTransmitter = new PacketTransmitter();
     static ConnectionList connected = new ConnectionList();
     public static ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor();
 
@@ -15,21 +16,19 @@ public final class NetworkLibrary {
     }
 
     public static void main(String[] args) throws Exception {
-        start();
+        startServer(6000);
     }
 
     public static ConnectionList getConnections() {
         return connected;
     }
 
-    public static void start() {
-        packetTransmitter = new PacketTransmitter();
-        packetTransmitter.start();
+    public static void startClient(InetSocketAddress serverSocketAddress) {
+        packetTransmitter.startClient(serverSocketAddress);
     }
 
-    public static void start(int port) {
-        packetTransmitter = new PacketTransmitter(port);
-        packetTransmitter.start();
+    public static void startServer(int port) {
+        packetTransmitter.startServer(port);
     }
 
     public static void stop() {

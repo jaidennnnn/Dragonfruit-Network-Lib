@@ -21,15 +21,13 @@ public class Connection {
     IDatagramSession session;
     boolean waitingForPublicKey = true;
 
-    public Connection(InetAddress address, int port) {
+    public Connection(InetAddress address, int port, IDatagramSession session) {
         this.socketAddress = new InetSocketAddress(address, port);
+        this.session = session;
     }
 
-    public Connection(InetSocketAddress socketAddress) {
+    public Connection(InetSocketAddress socketAddress, IDatagramSession session) {
         this.socketAddress = socketAddress;
-    }
-
-    public void setSession(IDatagramSession session) {
         this.session = session;
     }
 
@@ -56,7 +54,7 @@ public class Connection {
     public void sendEncryptedPacket(EncryptedPacket packet) {
         sendPacket(new PublicKeyPacket(publicKey, true));
         awaitPublicKeyAsync().whenComplete((func, exception) -> {
-            packet.encrypt(NetworkLibrary.getPacketTransmitter().getConnection().getEndToEndEncryption(),
+            packet.encrypt(NetworkLibrary.getPacketTransmitter().getServerConnection().getEndToEndEncryption(),
                     this.getPublicKey());
             sendPacket(packet);
         });

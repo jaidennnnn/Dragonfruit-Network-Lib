@@ -22,7 +22,7 @@ public class PublicKeyPacket extends Packet {
         PacketTransmitter packetTransmitter = NetworkLibrary.getPacketTransmitter();
 
         if (respond) {
-            BigInteger publicKey = packetTransmitter.getConnection().newPublicKey();
+            BigInteger publicKey = packetTransmitter.getServerConnection().newPublicKey();
             packetTransmitter.sendPacket(new PublicKeyPacket(publicKey, false),
                     connection);
         } else {

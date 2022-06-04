@@ -14,4 +14,8 @@ public class DatagramChannelBuilder {
     public static DatagramChannel bindChannel(SocketAddress local) throws IOException {
         return openChannel().bind(local);
     }
+
+    public static DatagramChannel connect(SocketAddress remote) throws IOException {
+        return openChannel().connect(remote);
+    }
 }
