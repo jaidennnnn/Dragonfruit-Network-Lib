@@ -8,7 +8,12 @@ import gg.dragonfruit.network.util.BigIntegerCache;
 public class EndToEndEncryption {
     BigInteger secretKey;
     BigInteger sharedKey;
+    BigInteger numberOfKeys;
     SecureRandom rand = new SecureRandom();
+
+    public EndToEndEncryption(BigInteger numberOfKeys) {
+        this.numberOfKeys = numberOfKeys;
+    }
 
     /**
      * Generates a new private key and uses it to calculate the public key. This key

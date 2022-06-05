@@ -3,7 +3,6 @@ package gg.dragonfruit.network;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
 
 import org.snf4j.core.EndingAction;
 import org.snf4j.core.handler.AbstractDatagramHandler;
@@ -11,11 +10,20 @@ import org.snf4j.core.handler.SessionEvent;
 import org.snf4j.core.session.DefaultSessionConfig;
 import org.snf4j.core.session.ISessionConfig;
 
+import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.EncryptedPacket;
 import gg.dragonfruit.network.packet.Packet;
+import gg.dragonfruit.network.util.BigIntegerCache;
 import gg.dragonfruit.network.util.PacketUtil;
 
 public class ClientHandler extends AbstractDatagramHandler {
+
+    EndToEndEncryption endToEndEncryption;
+
+    public ClientHandler() {
+        endToEndEncryption = new EndToEndEncryption(BigIntegerCache.NUMBER_OF_KEYS);
+    }
+
     @Override
     public void read(Object obj) {
         SocketAddress socketAddress = this.getSession().getRemoteAddress();
@@ -38,7 +46,7 @@ public class ClientHandler extends AbstractDatagramHandler {
 
         if (received instanceof EncryptedPacket) {
             EncryptedPacket encryptedPacket = (EncryptedPacket) received;
-            encryptedPacket.decrypt(NetworkLibrary.getPacketTransmitter().getServerConnection().getEndToEndEncryption(),
+            encryptedPacket.decrypt(NetworkLibrary.getPacketTransmitter().getSelfEndToEndEncryption(),
                     connection.getPublicKey());
         }
 
@@ -47,20 +55,8 @@ public class ClientHandler extends AbstractDatagramHandler {
 
     @Override
     public void event(SessionEvent event) {
-        if (event == SessionEvent.ENDING) {
-            SocketAddress socketAddress = this.getSession().getRemoteAddress();
+        if (event == SessionEvent.OPENED) {
 
-            if (!(socketAddress instanceof InetSocketAddress)) {
-                return;
-            }
-
-            InetSocketAddress iNetSocketAddress = (java.net.InetSocketAddress) socketAddress;
-
-            try {
-                NetworkLibrary.getConnections().disconnect(iNetSocketAddress.getAddress(), iNetSocketAddress.getPort());
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
         }
     }
 

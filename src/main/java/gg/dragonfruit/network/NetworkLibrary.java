@@ -16,7 +16,6 @@ public final class NetworkLibrary {
     }
 
     public static void main(String[] args) throws Exception {
-        startServer(6000);
     }
 
     public static ConnectionList getConnections() {
@@ -29,6 +28,7 @@ public final class NetworkLibrary {
 
     public static void startServer(int port) {
         packetTransmitter.startServer(port);
+
     }
 
     public static void stop() {
