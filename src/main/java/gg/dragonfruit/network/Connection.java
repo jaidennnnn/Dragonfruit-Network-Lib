@@ -3,10 +3,8 @@ package gg.dragonfruit.network;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
 
 import org.snf4j.core.session.IDatagramSession;
@@ -26,23 +24,16 @@ public abstract class Connection {
     PublicKey rsaPublicKey = null;
     boolean waitingForRSAPublicKey = true;
     boolean waitingForDHPublicKey = true;
+    KeyStorage<?> keyStorage = null;
 
     public Connection(InetAddress address, int port, IDatagramSession session) {
         this.socketAddress = new InetSocketAddress(address, port);
         this.session = session;
     }
 
-    String toEncrypt;
-    SecureRandom SECURE_RANDOM = new SecureRandom();
-
-    public void randomStr() {
-        byte[] array = new byte[64];
-        SECURE_RANDOM.nextBytes(array);
-        toEncrypt = new String(array, Charset.forName("UTF-8"));
-    }
-
-    public String getStringForVerification() {
-        return toEncrypt;
+    public void initializeKeyStorage(KeyStorage<?> keyStorage) {
+        this.keyStorage = keyStorage;
+        this.rsaPublicKey = keyStorage.getServerRSAPublicKey();
     }
 
     public void setKeyNumber(BigInteger numberOfKeys) {
@@ -98,6 +89,7 @@ public abstract class Connection {
     public void setRSAPublicKey(PublicKey rsaPublicKey) {
         this.rsaPublicKey = rsaPublicKey;
         this.waitingForRSAPublicKey = false;
+        keyStorage.storeServerRSAPublicKey(rsaPublicKey);
     }
 
     public PublicKey getRSAPublicKey() {
