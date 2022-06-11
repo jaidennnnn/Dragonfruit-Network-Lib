@@ -11,7 +11,14 @@ public class EndToEndEncryption {
     BigInteger numberOfKeys;
     SecureRandom rand = new SecureRandom();
 
+    public EndToEndEncryption() {
+    }
+
     public EndToEndEncryption(BigInteger numberOfKeys) {
+        this.numberOfKeys = numberOfKeys;
+    }
+
+    public void setNumberOfKeys(BigInteger numberOfKeys) {
         this.numberOfKeys = numberOfKeys;
     }
 
@@ -24,54 +31,13 @@ public class EndToEndEncryption {
      */
     public BigInteger getPublicKey() {
 
-        this.secretKey = new BigInteger(BigIntegerCache.NUMBER_OF_KEYS.bitLength(), rand);
+        this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
 
-        while (this.secretKey.compareTo(BigIntegerCache.NUMBER_OF_KEYS) >= 0) {
-            this.secretKey = new BigInteger(BigIntegerCache.NUMBER_OF_KEYS.bitLength(), rand);
+        while (this.secretKey.compareTo(numberOfKeys) >= 0) {
+            this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
         }
 
-        return BigIntegerCache.SMALL_PRIME.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
-    }
-
-    BigInteger currentNumber;
-
-    private BigInteger nextNumber() {
-        String numberToString = currentNumber.toString();
-        int firstNumber = Integer.parseInt(numberToString.substring(0, 1));
-
-        switch (firstNumber) {
-            case 0:
-            case 1:
-                currentNumber.add(BigIntegerCache.BIG_INT_5);
-            case 2:
-                currentNumber.multiply(BigIntegerCache.BIG_INT_7);
-            case 3:
-                currentNumber.multiply(BigIntegerCache.BIG_INT_6);
-            case 4:
-                currentNumber.multiply(BigIntegerCache.BIG_INT_5);
-            case 5:
-                currentNumber.multiply(BigIntegerCache.BIG_INT_4);
-            case 6:
-                currentNumber.multiply(BigIntegerCache.BIG_INT_3);
-            case 7:
-                currentNumber.multiply(BigIntegerCache.BIG_INT_2);
-            case 8:
-                currentNumber.divide(BigIntegerCache.BIG_INT_6);
-            case 9:
-                currentNumber.divide(BigIntegerCache.BIG_INT_7);
-        }
-
-        return currentNumber = currentNumber.abs();
-    }
-
-    private String offsetMap(int totalLength) {
-        StringBuilder sb = new StringBuilder();
-
-        while (sb.length() < totalLength) {
-            sb.append(nextNumber().toString());
-        }
-
-        return sb.toString();
+        return BigIntegerCache.SMALL_PRIME.modPow(secretKey, numberOfKeys);
     }
 
     /**
@@ -82,17 +48,8 @@ public class EndToEndEncryption {
      * @return the encrypted string.
      */
     public String encrypt(String string, BigInteger otherPublicKey) {
-        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
-        this.currentNumber = sharedKey;
-        String offsetMap = offsetMap(string.length());
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < string.length(); i++) {
-            sb.append((char) (string.charAt(i) + Integer.parseInt(new String(new char[] { offsetMap.charAt(i) }))));
-        }
-
-        return sb.toString();
+        return new BigInteger(string.getBytes())
+                .multiply(this.sharedKey = otherPublicKey.modPow(secretKey, numberOfKeys)).toString();
     }
 
     /**
@@ -103,17 +60,8 @@ public class EndToEndEncryption {
      * @return the decrypted string.
      */
     public String decrypt(String string, BigInteger otherPublicKey) {
-        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
-        this.currentNumber = sharedKey;
-        String offsetMap = offsetMap(string.length());
-
-        StringBuilder sb = new StringBuilder();
-
-        for (int i = 0; i < string.length(); i++) {
-            sb.append((char) (string.charAt(i) - Integer.parseInt(new String(new char[] { offsetMap.charAt(i) }))));
-        }
-
-        return sb.toString();
+        return new String(new BigInteger(string).divide(this.sharedKey = otherPublicKey.modPow(secretKey, numberOfKeys))
+                .toByteArray());
     }
 
     /**
@@ -124,28 +72,14 @@ public class EndToEndEncryption {
      * @return the encrypted strings.
      */
     public String[] encrypt(BigInteger otherPublicKey, String... s) {
-        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
-        this.currentNumber = sharedKey;
-        int totalLength = 0;
-
-        for (String string : s) {
-            totalLength += string.length();
-        }
-
-        String offsetMap = offsetMap(totalLength);
+        this.sharedKey = otherPublicKey.modPow(secretKey, numberOfKeys);
         String[] result = new String[s.length];
 
-        int o = 0;
-        for (int p = 0; p < s.length; p++) {
-            String string = s[p];
-            StringBuilder sb = new StringBuilder();
+        BigInteger currentKey = this.sharedKey;
 
-            for (int i = 0; i < string.length(); i++) {
-                sb.append((char) (string.charAt(i) + Integer.parseInt(new String(new char[] { offsetMap.charAt(o) }))));
-                o++;
-            }
-
-            result[p] = sb.toString();
+        for (int i = 0; i < s.length; i++) {
+            result[i] = new BigInteger(s[i].getBytes())
+                    .multiply(currentKey = BigIntegerCache.SMALL_PRIME.modPow(currentKey, numberOfKeys)).toString();
         }
 
         return result;
@@ -159,28 +93,14 @@ public class EndToEndEncryption {
      * @return the decrypted strings.
      */
     public String[] decrypt(BigInteger otherPublicKey, String... s) {
-        this.sharedKey = otherPublicKey.modPow(secretKey, BigIntegerCache.NUMBER_OF_KEYS);
-        this.currentNumber = sharedKey;
-        int totalLength = 0;
-
-        for (String string : s) {
-            totalLength += string.length();
-        }
-
-        String offsetMap = offsetMap(totalLength);
+        this.sharedKey = otherPublicKey.modPow(secretKey, numberOfKeys);
         String[] result = new String[s.length];
 
-        int o = 0;
-        for (int p = 0; p < s.length; p++) {
-            String string = s[p];
-            StringBuilder sb = new StringBuilder();
+        BigInteger currentKey = this.sharedKey;
 
-            for (int i = 0; i < string.length(); i++) {
-                sb.append((char) (string.charAt(i) - Integer.parseInt(new String(new char[] { offsetMap.charAt(o) }))));
-                o++;
-            }
-
-            result[p] = sb.toString();
+        for (int i = 0; i < s.length; i++) {
+            result[i] = new String(new BigInteger(s[i])
+                    .divide(currentKey = BigIntegerCache.SMALL_PRIME.modPow(currentKey, numberOfKeys)).toByteArray());
         }
 
         return result;

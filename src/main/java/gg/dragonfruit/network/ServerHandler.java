@@ -8,14 +8,20 @@ import java.net.UnknownHostException;
 import org.snf4j.core.handler.AbstractDatagramHandler;
 import org.snf4j.core.handler.SessionEvent;
 
-import gg.dragonfruit.network.encryption.RSAEncryption;
-import gg.dragonfruit.network.packet.EncryptedPacket;
+import gg.dragonfruit.network.collection.ClientConnectionList;
+import gg.dragonfruit.network.packet.DHEncryptedPacket;
+import gg.dragonfruit.network.packet.DHPublicKeyPacket;
 import gg.dragonfruit.network.packet.Packet;
-import gg.dragonfruit.network.packet.PublicKeyPacket;
-import gg.dragonfruit.network.packet.RSAPublicKeyPacket;
+import gg.dragonfruit.network.packet.RSAEncryptedPacket;
 import gg.dragonfruit.network.util.PacketUtil;
 
 public class ServerHandler extends AbstractDatagramHandler {
+
+    static ClientConnectionList connected = new ClientConnectionList();
+
+    public static ClientConnectionList getConnections() {
+        return connected;
+    }
 
     @Override
     public void read(SocketAddress socketAddress, Object obj) {
@@ -34,22 +40,17 @@ public class ServerHandler extends AbstractDatagramHandler {
             InetSocketAddress iNetSocketAddress = (java.net.InetSocketAddress) socketAddress;
 
             try {
-                NetworkLibrary.getConnections().disconnect(iNetSocketAddress.getAddress(), iNetSocketAddress.getPort());
+                connected.disconnect(iNetSocketAddress.getAddress(), iNetSocketAddress.getPort());
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
-        } else if (event == SessionEvent.OPENED) {
-            Connection connection = NetworkLibrary.getConnections().getOrCreate(this.getSession());
-            PacketTransmitter packetTransmitter = NetworkLibrary.getPacketTransmitter();
-            packetTransmitter.sendPacket(new RSAPublicKeyPacket(RSAEncryption.PUBLIC_KEY),
-                    connection);
         }
     }
 
     @Override
     public void read(Object obj) {
 
-        Connection connection = NetworkLibrary.getConnections().getOrCreate(this.getSession());
+        ClientConnection connection = connected.getOrCreate(this.getSession());
 
         byte[] data = (byte[]) obj;
 
@@ -61,21 +62,26 @@ public class ServerHandler extends AbstractDatagramHandler {
             return;
         }
 
-        if (received instanceof PublicKeyPacket) {
-            connection.awaitInitializationAsync().whenComplete((func, ex) -> {
-                received.received(connection);
-            });
-        }
-
-        if (received instanceof EncryptedPacket) {
-            connection.awaitInitializationAsync().whenComplete((func, ex) -> {
-                EncryptedPacket encryptedPacket = (EncryptedPacket) received;
+        if (received instanceof DHEncryptedPacket) {
+            connection.awaitKeyNumber().whenComplete((func, ex) -> {
+                DHEncryptedPacket encryptedPacket = (DHEncryptedPacket) received;
                 encryptedPacket.decrypt(
-                        NetworkLibrary.getPacketTransmitter().getSelfEndToEndEncryption(),
-                        connection.getPublicKey());
+                        PacketTransmitter.getSelfEndToEndEncryption(connection.getNumberOfKeys()),
+                        connection.getDHPublicKey());
                 received.received(connection);
             });
             return;
+        }
+
+        if (received instanceof RSAEncryptedPacket) {
+            RSAEncryptedPacket encryptedPacket = (RSAEncryptedPacket) received;
+            encryptedPacket.decrypt(connection.getRSAPrivateKey());
+        }
+
+        if (received instanceof DHPublicKeyPacket) {
+            connection.awaitKeyNumber().whenComplete((func, ex) -> {
+                received.received(connection);
+            });
         }
 
         received.received(connection);
