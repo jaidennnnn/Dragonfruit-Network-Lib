@@ -1,5 +1,10 @@
 package gg.dragonfruit.network.encryption;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -31,21 +36,49 @@ public class RSAEncryption {
         return generator.generateKeyPair();
     }
 
-    public static String encrypt(String string, PublicKey otherPublicKey)
+    public static byte[] encrypt(byte[] data, PublicKey otherPublicKey)
             throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
             IllegalBlockSizeException, BadPaddingException {
         Cipher encryptCipher = Cipher.getInstance("RSA");
         encryptCipher.init(Cipher.ENCRYPT_MODE, otherPublicKey);
-        byte[] secretMessageBytes = string.getBytes(StandardCharsets.UTF_8);
-        return Base64.getEncoder().encodeToString(encryptCipher.doFinal(secretMessageBytes));
+        return encryptCipher.doFinal(data);
+    }
+
+    public static byte[] decrypt(byte[] data, PrivateKey privateKey)
+            throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
+            IllegalBlockSizeException, BadPaddingException {
+        Cipher encryptCipher = Cipher.getInstance("RSA");
+        encryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
+        return encryptCipher.doFinal(data);
+    }
+
+    public static String encrypt(String string, PublicKey otherPublicKey)
+            throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
+            IllegalBlockSizeException, BadPaddingException {
+        return Base64.getEncoder().encodeToString(encrypt(string.getBytes(StandardCharsets.UTF_8), otherPublicKey));
     }
 
     public static String decrypt(String string, PrivateKey privateKey)
             throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException,
             IllegalBlockSizeException, BadPaddingException {
-        Cipher encryptCipher = Cipher.getInstance("RSA");
-        encryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
-        byte[] secretMessageBytes = string.getBytes(StandardCharsets.UTF_8);
-        return new String(encryptCipher.doFinal(secretMessageBytes), StandardCharsets.UTF_8);
+        return new String(decrypt(string.getBytes(StandardCharsets.UTF_8), privateKey), StandardCharsets.UTF_8);
+    }
+
+    public static byte[] serializePublicKey(PublicKey publicKey) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ObjectOutputStream os = new ObjectOutputStream(out);
+        os.writeObject(publicKey);
+        byte[] data = out.toByteArray();
+        os.close();
+        out.close();
+        return data;
+    }
+
+    public static PublicKey deserializePublicKey(byte[] data) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        ObjectInputStream is = new ObjectInputStream(in);
+        PublicKey publicKey = (PublicKey) is.readObject();
+        is.close();
+        return publicKey;
     }
 }

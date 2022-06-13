@@ -69,7 +69,7 @@ public abstract class Connection {
         exchangeDHPublicKeys(endToEndEncryption).whenComplete((dhPublicKey, exception) -> {
             packet.encrypt(endToEndEncryption,
                     dhPublicKey);
-            PacketTransmitter.sendPacket(packet, Connection.this);
+            sendPacket(packet);
         });
     }
 
@@ -124,7 +124,8 @@ public abstract class Connection {
     CompletableFuture<PublicKey> exchangeRSAPublicKeys() {
         return CompletableFuture.supplyAsync(() -> {
             this.waitingForRSAPublicKey = true;
-            sendPacket(new RSAPublicKeyPacket(getNewRSAPublicKey(),
+            PublicKey rsaPublicKey = Connection.this.rsaPublicKey;
+            sendPacket(new RSAPublicKeyPacket(getNewRSAPublicKey(), rsaPublicKey,
                     true));
             while (waitingForRSAPublicKey) {
 
