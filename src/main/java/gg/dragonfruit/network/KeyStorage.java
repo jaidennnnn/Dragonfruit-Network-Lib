@@ -12,9 +12,13 @@ public abstract class KeyStorage<T> {
 
     public abstract void storeOtherPublicKey(BigInteger key);
 
+    public abstract void storePrivateKey(BigInteger key);
+
     public abstract void storeKeyNumber(BigInteger keyNumber);
 
     public abstract BigInteger getOtherPublicKey();
+
+    public abstract BigInteger getPrivateKey();
 
     public abstract BigInteger getKeyNumber();
 }

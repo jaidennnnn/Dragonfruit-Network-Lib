@@ -25,6 +25,7 @@ public class EndToEndEncryption {
         this.keyStorage = keyStorage;
         this.numberOfKeys = keyStorage.getKeyNumber();
         this.otherPublicKey = keyStorage.getOtherPublicKey();
+        this.secretKey = keyStorage.getPrivateKey();
     }
 
     public void setNumberOfKeys(BigInteger numberOfKeys) {
@@ -61,6 +62,8 @@ public class EndToEndEncryption {
         while (this.secretKey.compareTo(numberOfKeys) >= 0) {
             this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
         }
+
+        this.keyStorage.storePrivateKey(this.secretKey);
 
         if (!needsKeyExchange()) {
             this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
