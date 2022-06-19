@@ -8,12 +8,12 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.snf4j.core.session.IDatagramSession;
 
-import gg.dragonfruit.network.ClientConnection;
+import gg.dragonfruit.network.Connection;
 import gg.dragonfruit.network.listener.ConnectionListener;
 
-public class ClientConnectionList extends ConcurrentLinkedQueue<ClientConnection> {
+public class ClientConnectionList extends ConcurrentLinkedQueue<Connection> {
 
-    public ClientConnection getOrCreate(IDatagramSession session) {
+    public Connection getOrCreate(IDatagramSession session) {
 
         SocketAddress socketAddress = session.getRemoteAddress();
 
@@ -23,14 +23,14 @@ public class ClientConnectionList extends ConcurrentLinkedQueue<ClientConnection
 
         InetSocketAddress iNetSocketAddress = (java.net.InetSocketAddress) socketAddress;
 
-        for (ClientConnection c : this) {
+        for (Connection c : this) {
             if (c.getAddress().equals(iNetSocketAddress.getAddress())
                     && c.getPort() == iNetSocketAddress.getPort()) {
                 return c;
             }
         }
 
-        ClientConnection connection = new ClientConnection(iNetSocketAddress.getAddress(), iNetSocketAddress.getPort(),
+        Connection connection = new Connection(iNetSocketAddress.getAddress(), iNetSocketAddress.getPort(),
                 session);
         this.add(connection);
 
@@ -41,12 +41,12 @@ public class ClientConnectionList extends ConcurrentLinkedQueue<ClientConnection
         return connection;
     }
 
-    public void disconnect(ClientConnection connection) throws UnknownHostException {
+    public void disconnect(Connection connection) throws UnknownHostException {
         disconnect(connection.getAddress(), connection.getPort());
     }
 
     public void disconnect(InetAddress address, int port) throws UnknownHostException {
-        for (ClientConnection c : this) {
+        for (Connection c : this) {
             if (c.getAddress().equals(address) && c.getPort() == port) {
                 for (ConnectionListener listener : ConnectionListener.getListeners()) {
                     listener.disconnected(c);

@@ -9,10 +9,9 @@ import org.snf4j.core.handler.AbstractDatagramHandler;
 import org.snf4j.core.handler.SessionEvent;
 
 import gg.dragonfruit.network.collection.ClientConnectionList;
+import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
-import gg.dragonfruit.network.packet.DHPublicKeyPacket;
 import gg.dragonfruit.network.packet.Packet;
-import gg.dragonfruit.network.packet.RSAEncryptedPacket;
 import gg.dragonfruit.network.util.PacketUtil;
 
 public class ServerHandler extends AbstractDatagramHandler {
@@ -50,7 +49,7 @@ public class ServerHandler extends AbstractDatagramHandler {
     @Override
     public void read(Object obj) {
 
-        ClientConnection connection = connected.getOrCreate(this.getSession());
+        Connection connection = connected.getOrCreate(this.getSession());
 
         byte[] data = (byte[]) obj;
 
@@ -63,25 +62,17 @@ public class ServerHandler extends AbstractDatagramHandler {
         }
 
         if (received instanceof DHEncryptedPacket) {
-            connection.awaitKeyNumber().whenComplete((func, ex) -> {
-                DHEncryptedPacket encryptedPacket = (DHEncryptedPacket) received;
-                encryptedPacket.decrypt(
-                        PacketTransmitter.getSelfEndToEndEncryption(connection.getNumberOfKeys()),
-                        connection.getDHPublicKey());
-                received.received(connection);
-            });
+            DHEncryptedPacket encryptedPacket = (DHEncryptedPacket) received;
+            EndToEndEncryption endToEndEncryption = connection.getSelfEndToEndEncryption();
+
+            if (encryptedPacket.getNumberOfKeys() != null) {
+                endToEndEncryption.setNumberOfKeys(encryptedPacket.getNumberOfKeys());
+            }
+
+            endToEndEncryption.setOtherPublicKey(encryptedPacket.getSenderPublicKey());
+            encryptedPacket.decrypt(endToEndEncryption);
+            received.received(connection);
             return;
-        }
-
-        if (received instanceof RSAEncryptedPacket) {
-            RSAEncryptedPacket encryptedPacket = (RSAEncryptedPacket) received;
-            encryptedPacket.decrypt(connection.getRSAPrivateKey());
-        }
-
-        if (received instanceof DHPublicKeyPacket) {
-            connection.awaitKeyNumber().whenComplete((func, ex) -> {
-                received.received(connection);
-            });
         }
 
         received.received(connection);

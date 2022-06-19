@@ -1,20 +1,10 @@
 package gg.dragonfruit.network.packet;
 
 import java.math.BigInteger;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 
 import gg.dragonfruit.network.Connection;
-import gg.dragonfruit.network.PacketTransmitter;
-import gg.dragonfruit.network.encryption.RSAEncryption;
 
-public class DHPublicKeyPacket extends RSAEncryptedPacket {
+public class DHPublicKeyPacket extends Packet {
 
     String publicKeyStr;
     boolean respond;
@@ -26,34 +16,12 @@ public class DHPublicKeyPacket extends RSAEncryptedPacket {
 
     @Override
     public void received(Connection connection) {
-        connection
-                .setDHPublicKey(new BigInteger(publicKeyStr));
-
         if (respond) {
             connection.sendPacket(new DHPublicKeyPacket(
-                    PacketTransmitter.getSelfEndToEndEncryption(connection.getNumberOfKeys()).getPublicKey(),
+                    connection.getSelfEndToEndEncryption().getPublicKey(),
                     false, connection));
         }
-    }
 
-    @Override
-    public void encrypt(PublicKey otherPublicKey) {
-        try {
-            this.publicKeyStr = RSAEncryption.encrypt(this.publicKeyStr, otherPublicKey);
-        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
-                | BadPaddingException e) {
-            e.printStackTrace();
-        }
+        connection.getSelfEndToEndEncryption().setOtherPublicKey(new BigInteger(publicKeyStr));
     }
-
-    @Override
-    public void decrypt(PrivateKey privateKey) {
-        try {
-            this.publicKeyStr = RSAEncryption.decrypt(this.publicKeyStr, privateKey);
-        } catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
-                | BadPaddingException e) {
-            e.printStackTrace();
-        }
-    }
-
 }

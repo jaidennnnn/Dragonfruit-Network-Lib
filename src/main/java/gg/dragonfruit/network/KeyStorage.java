@@ -1,7 +1,6 @@
 package gg.dragonfruit.network;
 
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.math.BigInteger;
 
 public abstract class KeyStorage<T> {
 
@@ -11,15 +10,11 @@ public abstract class KeyStorage<T> {
         this.object = object;
     }
 
-    public abstract void storeServerRSAPublicKey(PublicKey key);
+    public abstract void storeOtherPublicKey(BigInteger key);
 
-    public abstract void storeServerRSAPrviateKey(PrivateKey key);
+    public abstract void storeKeyNumber(BigInteger keyNumber);
 
-    public abstract void storeRSAPublicKey(PublicKey key);
+    public abstract BigInteger getOtherPublicKey();
 
-    public abstract PublicKey getRSAPublicKey();
-
-    public abstract PublicKey getServerRSAPublicKey();
-
-    public abstract PrivateKey getServerRSAPrivateKey();
+    public abstract BigInteger getKeyNumber();
 }

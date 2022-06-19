@@ -3,8 +3,7 @@ package gg.dragonfruit.network;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
 
 import org.snf4j.core.session.IDatagramSession;
@@ -13,31 +12,25 @@ import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
 import gg.dragonfruit.network.packet.DHPublicKeyPacket;
 import gg.dragonfruit.network.packet.Packet;
-import gg.dragonfruit.network.packet.RSAEncryptedPacket;
-import gg.dragonfruit.network.packet.RSAPublicKeyPacket;
 
-public abstract class Connection {
+public class Connection {
     final InetSocketAddress socketAddress;
     BigInteger dhPublicKey;
     IDatagramSession session;
-    BigInteger numberOfKeys;
-    PublicKey rsaPublicKey = null;
-    boolean waitingForRSAPublicKey = true;
     boolean waitingForDHPublicKey = true;
-    KeyStorage<?> keyStorage = null;
+    EndToEndEncryption endToEndEncryption = new EndToEndEncryption();
 
     public Connection(InetAddress address, int port, IDatagramSession session) {
         this.socketAddress = new InetSocketAddress(address, port);
         this.session = session;
     }
 
-    public void initializeKeyStorage(KeyStorage<?> keyStorage) {
-        this.keyStorage = keyStorage;
-        this.rsaPublicKey = keyStorage.getServerRSAPublicKey();
+    public EndToEndEncryption getSelfEndToEndEncryption() {
+        return endToEndEncryption;
     }
 
     public void setKeyNumber(BigInteger numberOfKeys) {
-        this.numberOfKeys = numberOfKeys;
+        endToEndEncryption.setNumberOfKeys(numberOfKeys);
     }
 
     public void setDHPublicKey(BigInteger dhPublicKey) {
@@ -55,45 +48,27 @@ public abstract class Connection {
             return;
         }
 
-        if (packet instanceof RSAEncryptedPacket) {
-            sendRSAEncryptedPacket((RSAEncryptedPacket) packet);
-            return;
-        }
-
         PacketTransmitter.sendPacket(packet, this);
     }
 
     void sendDHEncryptedPacket(DHEncryptedPacket packet) {
-        EndToEndEncryption endToEndEncryption = PacketTransmitter.getSelfEndToEndEncryption(numberOfKeys);
-
-        exchangeDHPublicKeys(endToEndEncryption).whenComplete((dhPublicKey, exception) -> {
-            packet.encrypt(endToEndEncryption,
-                    dhPublicKey);
-            sendPacket(packet);
-        });
-    }
-
-    void sendRSAEncryptedPacket(RSAEncryptedPacket packet) {
-        if (rsaPublicKey != null) {
-            packet.encrypt(this.rsaPublicKey);
-            PacketTransmitter.sendPacket(packet, Connection.this);
-            return;
+        EndToEndEncryption endToEndEncryption = getSelfEndToEndEncryption();
+        if (endToEndEncryption.needsKeyExchange()) {
+            exchangeDHPublicKeys(endToEndEncryption).whenComplete((dhPublicKey, exception) -> {
+                sendDHEncryptedPacket(packet);
+            });
         }
 
-        exchangeRSAPublicKeys().whenComplete((rsaPublicKey, exception) -> {
-            packet.encrypt(rsaPublicKey);
-            PacketTransmitter.sendPacket(packet, Connection.this);
-        });
-    }
+        BigInteger numberOfKeys = getSelfEndToEndEncryption().getNumberOfKeys();
 
-    public void setRSAPublicKey(PublicKey rsaPublicKey) {
-        this.rsaPublicKey = rsaPublicKey;
-        this.waitingForRSAPublicKey = false;
-        keyStorage.storeServerRSAPublicKey(rsaPublicKey);
-    }
+        if (numberOfKeys == null) {
+            setKeyNumber(BigInteger.probablePrime(6144, new SecureRandom()));
+            packet.setNumberOfKeys(numberOfKeys);
+        }
 
-    public PublicKey getRSAPublicKey() {
-        return rsaPublicKey;
+        packet.setSenderPublicKey(endToEndEncryption.getPublicKey());
+        packet.encrypt(endToEndEncryption);
+        PacketTransmitter.sendPacket(packet, this);
     }
 
     public IDatagramSession getSession() {
@@ -108,36 +83,16 @@ public abstract class Connection {
         return socketAddress.getPort();
     }
 
-    CompletableFuture<BigInteger> exchangeDHPublicKeys(EndToEndEncryption endToEndEncryption) {
-        return CompletableFuture.supplyAsync(() -> {
+    CompletableFuture<Void> exchangeDHPublicKeys(EndToEndEncryption endToEndEncryption) {
+        return CompletableFuture.runAsync(() -> {
             this.waitingForDHPublicKey = true;
             sendPacket(new DHPublicKeyPacket(endToEndEncryption.getPublicKey(),
                     true, this));
             while (waitingForDHPublicKey) {
 
             }
-
-            return this.dhPublicKey;
         });
     }
-
-    CompletableFuture<PublicKey> exchangeRSAPublicKeys() {
-        return CompletableFuture.supplyAsync(() -> {
-            this.waitingForRSAPublicKey = true;
-            PublicKey rsaPublicKey = Connection.this.rsaPublicKey;
-            sendPacket(new RSAPublicKeyPacket(getNewRSAPublicKey(), rsaPublicKey,
-                    true));
-            while (waitingForRSAPublicKey) {
-
-            }
-
-            return this.rsaPublicKey;
-        });
-    }
-
-    public abstract PublicKey getNewRSAPublicKey();
-
-    public abstract PrivateKey getRSAPrivateKey();
 
     @Override
     public boolean equals(Object o) {
@@ -148,9 +103,5 @@ public abstract class Connection {
         }
 
         return false;
-    }
-
-    public BigInteger getNumberOfKeys() {
-        return numberOfKeys;
     }
 }
