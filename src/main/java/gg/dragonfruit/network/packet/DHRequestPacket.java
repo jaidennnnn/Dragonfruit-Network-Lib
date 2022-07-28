@@ -17,7 +17,6 @@ public class DHRequestPacket extends Packet {
         connection.getSelfEndToEndEncryption().setNumberOfKeys(new BigInteger(numberOfKeysByte));
         connection.sendPacket(new DHPublicKeyPacket(
                 connection.getSelfEndToEndEncryption().getPublicKey()));
-        System.out.println("packet sent");
 
     }
 
