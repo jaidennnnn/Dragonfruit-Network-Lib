@@ -9,7 +9,7 @@ public class DHRequestPacket extends Packet {
     byte[] numberOfKeysByte;
 
     public DHRequestPacket(BigInteger numberOfKeys) {
-        this.numberOfKeysByte = numberOfKeys == null ? null : numberOfKeys.toByteArray();
+        this.numberOfKeysByte = numberOfKeys.toByteArray();
     }
 
     @Override
