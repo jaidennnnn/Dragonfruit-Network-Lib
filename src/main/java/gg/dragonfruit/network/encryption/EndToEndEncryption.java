@@ -12,13 +12,6 @@ public class EndToEndEncryption {
     BigInteger otherPublicKey;
     SecureRandom rand = new SecureRandom();
 
-    public EndToEndEncryption() {
-    }
-
-    public EndToEndEncryption(BigInteger numberOfKeys) {
-        this.setNumberOfKeys(numberOfKeys);
-    }
-
     public void setNumberOfKeys(BigInteger numberOfKeys) {
         this.numberOfKeys = numberOfKeys;
     }
@@ -46,15 +39,20 @@ public class EndToEndEncryption {
      */
     public BigInteger getPublicKey() {
 
+        System.out.println("getPublicKey");
+
         this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
 
         while (this.secretKey.compareTo(numberOfKeys) >= 0) {
             this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
         }
+        System.out.println("generated secret key");
 
         if (!needsKeyExchange()) {
             this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
         }
+
+        System.out.println("generated shared key");
 
         return BigIntegerCache.SMALL_PRIME.modPow(secretKey, numberOfKeys);
     }
