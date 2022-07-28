@@ -3,7 +3,6 @@ package gg.dragonfruit.network.encryption;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-import gg.dragonfruit.network.KeyStorage;
 import gg.dragonfruit.network.util.BigIntegerCache;
 
 public class EndToEndEncryption {
@@ -11,7 +10,6 @@ public class EndToEndEncryption {
     BigInteger sharedKey;
     BigInteger numberOfKeys;
     BigInteger otherPublicKey;
-    KeyStorage<?> keyStorage;
     SecureRandom rand = new SecureRandom();
 
     public EndToEndEncryption() {
@@ -21,16 +19,8 @@ public class EndToEndEncryption {
         this.setNumberOfKeys(numberOfKeys);
     }
 
-    public void setKeyStorage(KeyStorage<?> keyStorage) {
-        this.keyStorage = keyStorage;
-        this.numberOfKeys = keyStorage.getKeyNumber();
-        this.otherPublicKey = keyStorage.getOtherPublicKey();
-        this.secretKey = keyStorage.getPrivateKey();
-    }
-
     public void setNumberOfKeys(BigInteger numberOfKeys) {
         this.numberOfKeys = numberOfKeys;
-        this.keyStorage.storeKeyNumber(numberOfKeys);
     }
 
     /**
@@ -41,7 +31,6 @@ public class EndToEndEncryption {
     public void setOtherPublicKey(BigInteger otherPublicKey) {
         this.otherPublicKey = otherPublicKey;
         this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
-        this.keyStorage.storeOtherPublicKey(otherPublicKey);
     }
 
     public boolean needsKeyExchange() {
@@ -62,8 +51,6 @@ public class EndToEndEncryption {
         while (this.secretKey.compareTo(numberOfKeys) >= 0) {
             this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
         }
-
-        this.keyStorage.storePrivateKey(this.secretKey);
 
         if (!needsKeyExchange()) {
             this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
