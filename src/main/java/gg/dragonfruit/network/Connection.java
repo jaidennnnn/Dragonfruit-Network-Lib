@@ -41,7 +41,6 @@ public class Connection {
         if (getSelfEndToEndEncryption().needsKeyExchange()) {
             requestDHPublicKey().whenComplete((dhPublicKey, exception) -> {
                 sendDHEncryptedPacket(packet);
-                System.out.println("Packet sent");
             });
             return;
         }

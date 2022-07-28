@@ -14,6 +14,7 @@ public class DHPublicKeyPacket extends Packet {
 
     @Override
     public void received(Connection connection) {
+        System.out.println("recieved");
         connection.setOtherPublicKey(new BigInteger(publicKeyStr));
     }
 }
