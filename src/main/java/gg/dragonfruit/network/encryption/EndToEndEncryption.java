@@ -39,15 +39,10 @@ public class EndToEndEncryption {
      */
     public BigInteger getPublicKey() {
 
-        if (numberOfKeys == null) {
-            System.out.println("Number of keys is null.");
-        }
-
         this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
 
         while (this.secretKey.compareTo(numberOfKeys) >= 0) {
             this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
-            System.out.println("Stuck in loop.");
         }
 
         if (!needsKeyExchange()) {

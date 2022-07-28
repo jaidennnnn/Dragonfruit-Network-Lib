@@ -45,14 +45,6 @@ public class Connection {
             return;
         }
 
-        BigInteger numberOfKeys = getSelfEndToEndEncryption().getNumberOfKeys();
-
-        if (numberOfKeys == null) {
-            getSelfEndToEndEncryption()
-                    .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
-            packet.setNumberOfKeys(numberOfKeys);
-        }
-
         packet.setSenderPublicKey(getSelfEndToEndEncryption().getPublicKey());
         packet.encrypt(getSelfEndToEndEncryption());
         PacketTransmitter.sendPacket(packet, this);
@@ -73,7 +65,10 @@ public class Connection {
     CompletableFuture<Void> requestDHPublicKey() {
         return CompletableFuture.runAsync(() -> {
             this.waitingForDHPublicKey = true;
-            sendPacket(new DHRequestPacket());
+            BigInteger numberOfKeys;
+            getSelfEndToEndEncryption()
+                    .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
+            sendPacket(new DHRequestPacket(numberOfKeys));
             while (waitingForDHPublicKey) {
 
             }
