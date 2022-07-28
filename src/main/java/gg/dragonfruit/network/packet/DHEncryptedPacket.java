@@ -6,23 +6,23 @@ import gg.dragonfruit.network.encryption.EndToEndEncryption;
 
 public abstract class DHEncryptedPacket extends Packet {
 
-    String senderPublicKeyStr = null;
-    String numberOfKeysStr = null;
+    byte[] senderPublicKeyBytes = null;
+    byte[] numberOfKeysBytes = null;
 
     public void setNumberOfKeys(BigInteger numberOfKeys) {
-        this.numberOfKeysStr = numberOfKeys.toString();
+        this.numberOfKeysBytes = numberOfKeys.toByteArray();
     }
 
     public BigInteger getNumberOfKeys() {
-        return numberOfKeysStr == null ? null : new BigInteger(senderPublicKeyStr);
+        return numberOfKeysBytes == null ? null : new BigInteger(numberOfKeysBytes);
     }
 
     public void setSenderPublicKey(BigInteger senderPublicKey) {
-        this.senderPublicKeyStr = senderPublicKey.toString();
+        this.senderPublicKeyBytes = senderPublicKey.toByteArray();
     }
 
     public BigInteger getSenderPublicKey() {
-        return senderPublicKeyStr == null ? null : new BigInteger(senderPublicKeyStr);
+        return senderPublicKeyBytes == null ? null : new BigInteger(senderPublicKeyBytes);
     }
 
     public abstract void encrypt(EndToEndEncryption endToEndEncryption);

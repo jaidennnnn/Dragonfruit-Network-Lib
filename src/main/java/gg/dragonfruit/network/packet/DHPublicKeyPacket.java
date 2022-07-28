@@ -6,14 +6,14 @@ import gg.dragonfruit.network.Connection;
 
 public class DHPublicKeyPacket extends Packet {
 
-    String publicKeyStr;
+    byte[] publicKeyBytes;
 
     public DHPublicKeyPacket(BigInteger publicKey) {
-        this.publicKeyStr = publicKey.toString();
+        this.publicKeyBytes = publicKey.toByteArray();
     }
 
     @Override
     public void received(Connection connection) {
-        connection.setOtherPublicKey(new BigInteger(publicKeyStr));
+        connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
     }
 }
