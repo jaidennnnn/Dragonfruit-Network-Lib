@@ -6,6 +6,7 @@ public class DHRequestPacket extends Packet {
 
     @Override
     public void received(Connection connection) {
+        System.out.println("DH key requested");
         connection.sendPacket(new DHPublicKeyPacket(
                 connection.getSelfEndToEndEncryption().getPublicKey()));
     }
