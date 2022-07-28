@@ -23,6 +23,9 @@ public class EndToEndEncryption {
      */
     public void setOtherPublicKey(BigInteger otherPublicKey) {
         this.otherPublicKey = otherPublicKey;
+    }
+
+    public void setSharedKey() {
         this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
     }
 
@@ -46,7 +49,7 @@ public class EndToEndEncryption {
         }
 
         if (!needsKeyExchange()) {
-            this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
+            setSharedKey();
         }
 
         return BigIntegerCache.SMALL_PRIME.modPow(secretKey, numberOfKeys);
