@@ -15,7 +15,6 @@ import gg.dragonfruit.network.packet.Packet;
 
 public class Connection {
     final InetSocketAddress socketAddress;
-    BigInteger dhPublicKey;
     IDatagramSession session;
     boolean waitingForDHPublicKey = true;
     EndToEndEncryption endToEndEncryption = new EndToEndEncryption();
@@ -33,15 +32,6 @@ public class Connection {
         endToEndEncryption.setNumberOfKeys(numberOfKeys);
     }
 
-    public void setDHPublicKey(BigInteger dhPublicKey) {
-        this.dhPublicKey = dhPublicKey;
-        this.waitingForDHPublicKey = false;
-    }
-
-    public BigInteger getDHPublicKey() {
-        return dhPublicKey;
-    }
-
     public void sendPacket(Packet packet) {
         if (packet instanceof DHEncryptedPacket) {
             sendDHEncryptedPacket((DHEncryptedPacket) packet);
@@ -57,9 +47,10 @@ public class Connection {
             exchangeDHPublicKeys(endToEndEncryption).whenComplete((dhPublicKey, exception) -> {
                 sendDHEncryptedPacket(packet);
             });
+            return;
         }
 
-        BigInteger numberOfKeys = getSelfEndToEndEncryption().getNumberOfKeys();
+        BigInteger numberOfKeys = endToEndEncryption.getNumberOfKeys();
 
         if (numberOfKeys == null) {
             setKeyNumber(BigInteger.probablePrime(6144, new SecureRandom()));
@@ -92,6 +83,11 @@ public class Connection {
 
             }
         });
+    }
+
+    public void setOtherPublicKey(BigInteger otherPublicKey) {
+        getSelfEndToEndEncryption().setOtherPublicKey(otherPublicKey);
+        this.waitingForDHPublicKey = false;
     }
 
     @Override
