@@ -10,6 +10,7 @@ public class DHPublicKeyPacket extends Packet {
 
     public DHPublicKeyPacket(BigInteger publicKey) {
         this.publicKeyBytes = publicKey.toByteArray();
+        System.out.println("Packet init");
     }
 
     @Override
