@@ -39,20 +39,20 @@ public class EndToEndEncryption {
      */
     public BigInteger getPublicKey() {
 
-        System.out.println("getPublicKey");
+        if (numberOfKeys == null) {
+            System.out.println("Number of keys is null.");
+        }
 
         this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
 
         while (this.secretKey.compareTo(numberOfKeys) >= 0) {
             this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
+            System.out.println("Stuck in loop.");
         }
-        System.out.println("generated secret key");
 
         if (!needsKeyExchange()) {
             this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
         }
-
-        System.out.println("generated shared key");
 
         return BigIntegerCache.SMALL_PRIME.modPow(secretKey, numberOfKeys);
     }
