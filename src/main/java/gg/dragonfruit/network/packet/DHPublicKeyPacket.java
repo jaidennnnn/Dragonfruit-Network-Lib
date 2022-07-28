@@ -10,11 +10,11 @@ public class DHPublicKeyPacket extends Packet {
 
     public DHPublicKeyPacket(BigInteger publicKey) {
         this.publicKeyBytes = publicKey.toByteArray();
+        System.out.println("packet initialized");
     }
 
     @Override
     public void received(Connection connection) {
         connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
-        System.out.println("keys exchanged");
     }
 }
