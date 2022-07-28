@@ -49,7 +49,7 @@ public class Connection {
 
         if (numberOfKeys == null) {
             getSelfEndToEndEncryption()
-                    .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(6144, new SecureRandom()));
+                    .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
             packet.setNumberOfKeys(numberOfKeys);
         }
 
