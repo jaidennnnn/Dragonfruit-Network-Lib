@@ -6,7 +6,7 @@ import gg.dragonfruit.network.encryption.EndToEndEncryption;
 
 public abstract class DHEncryptedPacket extends Packet {
 
-    String senderPublicKeyStr;
+    String senderPublicKeyStr = null;
     String numberOfKeysStr = null;
 
     public void setNumberOfKeys(BigInteger numberOfKeys) {
@@ -14,7 +14,7 @@ public abstract class DHEncryptedPacket extends Packet {
     }
 
     public BigInteger getNumberOfKeys() {
-        return new BigInteger(senderPublicKeyStr);
+        return numberOfKeysStr == null ? null : new BigInteger(senderPublicKeyStr);
     }
 
     public void setSenderPublicKey(BigInteger senderPublicKey) {
@@ -22,7 +22,7 @@ public abstract class DHEncryptedPacket extends Packet {
     }
 
     public BigInteger getSenderPublicKey() {
-        return new BigInteger(senderPublicKeyStr);
+        return senderPublicKeyStr == null ? null : new BigInteger(senderPublicKeyStr);
     }
 
     public abstract void encrypt(EndToEndEncryption endToEndEncryption);

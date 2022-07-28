@@ -28,10 +28,6 @@ public class Connection {
         return endToEndEncryption;
     }
 
-    public void setKeyNumber(BigInteger numberOfKeys) {
-        endToEndEncryption.setNumberOfKeys(numberOfKeys);
-    }
-
     public void sendPacket(Packet packet) {
         if (packet instanceof DHEncryptedPacket) {
             sendDHEncryptedPacket((DHEncryptedPacket) packet);
@@ -42,23 +38,23 @@ public class Connection {
     }
 
     void sendDHEncryptedPacket(DHEncryptedPacket packet) {
-        EndToEndEncryption endToEndEncryption = getSelfEndToEndEncryption();
-        if (endToEndEncryption.needsKeyExchange()) {
-            exchangeDHPublicKeys(endToEndEncryption).whenComplete((dhPublicKey, exception) -> {
+        if (getSelfEndToEndEncryption().needsKeyExchange()) {
+            exchangeDHPublicKeys(getSelfEndToEndEncryption()).whenComplete((dhPublicKey, exception) -> {
                 sendDHEncryptedPacket(packet);
             });
             return;
         }
 
-        BigInteger numberOfKeys = endToEndEncryption.getNumberOfKeys();
+        BigInteger numberOfKeys = getSelfEndToEndEncryption().getNumberOfKeys();
 
         if (numberOfKeys == null) {
-            setKeyNumber(numberOfKeys = BigInteger.probablePrime(6144, new SecureRandom()));
+            getSelfEndToEndEncryption()
+                    .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(6144, new SecureRandom()));
             packet.setNumberOfKeys(numberOfKeys);
         }
 
-        packet.setSenderPublicKey(endToEndEncryption.getPublicKey());
-        packet.encrypt(endToEndEncryption);
+        packet.setSenderPublicKey(getSelfEndToEndEncryption().getPublicKey());
+        packet.encrypt(getSelfEndToEndEncryption());
         PacketTransmitter.sendPacket(packet, this);
     }
 

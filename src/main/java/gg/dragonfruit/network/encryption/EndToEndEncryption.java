@@ -8,7 +8,7 @@ import gg.dragonfruit.network.util.BigIntegerCache;
 public class EndToEndEncryption {
     BigInteger secretKey;
     BigInteger sharedKey;
-    BigInteger numberOfKeys;
+    BigInteger numberOfKeys = null;
     BigInteger otherPublicKey;
     SecureRandom rand = new SecureRandom();
 
