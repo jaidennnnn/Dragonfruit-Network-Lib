@@ -10,7 +10,7 @@ import org.snf4j.core.session.IDatagramSession;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
-import gg.dragonfruit.network.packet.DHPublicKeyPacket;
+import gg.dragonfruit.network.packet.DHRequestPacket;
 import gg.dragonfruit.network.packet.Packet;
 
 public class Connection {
@@ -39,7 +39,7 @@ public class Connection {
 
     void sendDHEncryptedPacket(DHEncryptedPacket packet) {
         if (getSelfEndToEndEncryption().needsKeyExchange()) {
-            exchangeDHPublicKeys(getSelfEndToEndEncryption()).whenComplete((dhPublicKey, exception) -> {
+            requestDHPublicKey().whenComplete((dhPublicKey, exception) -> {
                 sendDHEncryptedPacket(packet);
             });
             return;
@@ -70,11 +70,10 @@ public class Connection {
         return socketAddress.getPort();
     }
 
-    CompletableFuture<Void> exchangeDHPublicKeys(EndToEndEncryption endToEndEncryption) {
+    CompletableFuture<Void> requestDHPublicKey() {
         return CompletableFuture.runAsync(() -> {
             this.waitingForDHPublicKey = true;
-            sendPacket(new DHPublicKeyPacket(endToEndEncryption.getPublicKey(),
-                    true, this));
+            sendPacket(new DHRequestPacket());
             while (waitingForDHPublicKey) {
 
             }
