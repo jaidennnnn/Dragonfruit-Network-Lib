@@ -22,6 +22,6 @@ public class DHPublicKeyPacket extends Packet {
                     false, connection));
         }
 
-        connection.getSelfEndToEndEncryption().setOtherPublicKey(new BigInteger(publicKeyStr));
+        connection.setOtherPublicKey(new BigInteger(publicKeyStr));
     }
 }
