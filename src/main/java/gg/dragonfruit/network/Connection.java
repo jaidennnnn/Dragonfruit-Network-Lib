@@ -53,7 +53,7 @@ public class Connection {
         BigInteger numberOfKeys = endToEndEncryption.getNumberOfKeys();
 
         if (numberOfKeys == null) {
-            setKeyNumber(BigInteger.probablePrime(6144, new SecureRandom()));
+            setKeyNumber(numberOfKeys = BigInteger.probablePrime(6144, new SecureRandom()));
             packet.setNumberOfKeys(numberOfKeys);
         }
 
