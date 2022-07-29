@@ -7,11 +7,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import gg.dragonfruit.network.packet.Packet;
-import net.jpountz.lz4.LZ4Factory;
 
 public class PacketUtil {
-
-    static LZ4Factory factory = LZ4Factory.fastestInstance();
 
     public static byte[] serializePacket(Packet packet) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
