@@ -11,9 +11,9 @@ import org.snf4j.core.session.IDatagramSession;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
-import gg.dragonfruit.network.packet.DHExchangePacket;
+import gg.dragonfruit.network.packet.DHRefreshPacket;
 import gg.dragonfruit.network.packet.DHInitPacket;
-import gg.dragonfruit.network.packet.DHRequestKeyPacket;
+import gg.dragonfruit.network.packet.DHRequestRefreshPacket;
 import gg.dragonfruit.network.packet.Packet;
 
 public class Connection {
@@ -72,15 +72,12 @@ public class Connection {
 
     public void requestDHPublicKey() {
         this.waitingForDHPublicKey = true;
-        sendPacket(new DHRequestKeyPacket());
+        sendPacket(new DHRequestRefreshPacket());
     }
 
-    public void exchangeDHPublicKeys() {
+    public void refreshDHSharedKey() {
         this.waitingForDHPublicKey = true;
-        BigInteger sharedKey = getSelfEndToEndEncryption().getSharedKey();
-        DHExchangePacket exchangePacket = new DHExchangePacket(getSelfEndToEndEncryption().getPublicKey());
-        exchangePacket.encrypt(getSelfEndToEndEncryption(), sharedKey);
-        sendPacket(exchangePacket);
+        sendPacket(new DHRefreshPacket(getSelfEndToEndEncryption().getPublicKey()));
     }
 
     public void initDH() {
@@ -93,6 +90,10 @@ public class Connection {
 
     public void setOtherPublicKey(BigInteger otherPublicKey) {
         getSelfEndToEndEncryption().setOtherPublicKey(otherPublicKey);
+        refreshedPublicKey();
+    }
+
+    public void refreshedPublicKey() {
         this.waitingForDHPublicKey = false;
 
         DHEncryptedPacket packet;
