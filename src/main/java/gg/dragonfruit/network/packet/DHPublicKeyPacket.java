@@ -14,11 +14,6 @@ public class DHPublicKeyPacket extends Packet {
 
     @Override
     public void received(Connection connection) {
-        System.out.println("packet received");
-        if (publicKeyBytes == null) {
-            System.out.println("publicKeyBytes is null");
-        }
         connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
-        System.out.println("packet processed");
     }
 }
