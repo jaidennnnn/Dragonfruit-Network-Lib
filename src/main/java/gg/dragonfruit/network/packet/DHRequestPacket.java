@@ -20,6 +20,7 @@ public class DHRequestPacket extends Packet {
         connection.sendPacket(new DHPublicKeyPacket(
                 connection.getSelfEndToEndEncryption().getPublicKey()));
         connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
+        System.out.println("DHRequestPacket");
     }
 
 }
