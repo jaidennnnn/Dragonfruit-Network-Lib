@@ -16,10 +16,16 @@ public class DHRequestPacket extends Packet {
 
     @Override
     public void received(Connection connection) {
-        connection.getSelfEndToEndEncryption().setNumberOfKeys(new BigInteger(numberOfKeysBytes));
-        connection.sendPacket(new DHPublicKeyPacket(
-                connection.getSelfEndToEndEncryption().getPublicKey()));
-        connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
+        try {
+            connection.getSelfEndToEndEncryption().setNumberOfKeys(new BigInteger(numberOfKeysBytes));
+            System.out.println("1");
+            connection.sendPacket(new DHPublicKeyPacket(
+                    connection.getSelfEndToEndEncryption().getPublicKey()));
+            System.out.println("2");
+            connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         System.out.println("DHRequestPacket");
     }
 
