@@ -24,6 +24,7 @@ public class EndToEndEncryption {
     public void setOtherPublicKey(BigInteger otherPublicKey) {
         this.otherPublicKey = otherPublicKey;
         this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
+        System.out.println(this.sharedKey.toString());
     }
 
     /**
