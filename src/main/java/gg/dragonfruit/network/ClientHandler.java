@@ -24,7 +24,7 @@ public class ClientHandler extends AbstractDatagramHandler {
 
     public static void setServerConnection(Connection serverConnection) {
         ClientHandler.serverConnection = serverConnection;
-        serverConnection.requestDHPublicKey();
+        serverConnection.initDH();
     }
 
     @Override

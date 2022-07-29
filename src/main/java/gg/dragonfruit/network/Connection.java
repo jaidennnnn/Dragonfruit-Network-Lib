@@ -11,7 +11,9 @@ import org.snf4j.core.session.IDatagramSession;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
-import gg.dragonfruit.network.packet.DHRequestPacket;
+import gg.dragonfruit.network.packet.DHExchangePacket;
+import gg.dragonfruit.network.packet.DHInitPacket;
+import gg.dragonfruit.network.packet.DHRequestKeyPacket;
 import gg.dragonfruit.network.packet.Packet;
 
 public class Connection {
@@ -32,14 +34,19 @@ public class Connection {
 
     public void sendPacket(Packet packet) {
         if (packet instanceof DHEncryptedPacket) {
-            sendDHEncryptedPacket((DHEncryptedPacket) packet);
+            sendDHEncryptedPacket((DHEncryptedPacket) packet, true);
             return;
         }
 
         PacketTransmitter.sendPacket(packet, this);
     }
 
-    void sendDHEncryptedPacket(DHEncryptedPacket packet) {
+    void sendDHEncryptedPacket(DHEncryptedPacket packet, boolean newKey) {
+
+        if (newKey) {
+            requestDHPublicKey();
+        }
+
         if (this.waitingForDHPublicKey) {
             encryptedPacketQueue.add(packet);
             return;
@@ -63,10 +70,20 @@ public class Connection {
 
     public void requestDHPublicKey() {
         this.waitingForDHPublicKey = true;
+        sendPacket(new DHRequestKeyPacket());
+    }
+
+    public void exchangeDHPublicKeys() {
+        this.waitingForDHPublicKey = true;
+        sendPacket(new DHExchangePacket(getSelfEndToEndEncryption().getPublicKey()));
+    }
+
+    public void initDH() {
+        this.waitingForDHPublicKey = true;
         BigInteger numberOfKeys;
         getSelfEndToEndEncryption()
                 .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
-        sendPacket(new DHRequestPacket(numberOfKeys, getSelfEndToEndEncryption().getPublicKey()));
+        sendPacket(new DHInitPacket(numberOfKeys, getSelfEndToEndEncryption().getPublicKey()));
     }
 
     public void setOtherPublicKey(BigInteger otherPublicKey) {
@@ -75,7 +92,7 @@ public class Connection {
 
         DHEncryptedPacket packet;
         while ((packet = encryptedPacketQueue.poll()) != null) {
-            sendDHEncryptedPacket(packet);
+            sendDHEncryptedPacket(packet, false);
         }
     }
 
