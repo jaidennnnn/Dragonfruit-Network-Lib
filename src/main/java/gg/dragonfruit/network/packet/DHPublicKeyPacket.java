@@ -15,6 +15,5 @@ public class DHPublicKeyPacket extends Packet {
     @Override
     public void received(Connection connection) {
         connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
-        connection.getSelfEndToEndEncryption().setSharedKey();
     }
 }

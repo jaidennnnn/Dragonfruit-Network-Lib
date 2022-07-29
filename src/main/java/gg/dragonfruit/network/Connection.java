@@ -10,7 +10,6 @@ import org.snf4j.core.session.IDatagramSession;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
-import gg.dragonfruit.network.packet.DHRefreshKeyPacket;
 import gg.dragonfruit.network.packet.DHRequestPacket;
 import gg.dragonfruit.network.packet.Packet;
 
@@ -38,14 +37,7 @@ public class Connection {
         PacketTransmitter.sendPacket(packet, this);
     }
 
-    int sentPackets = 0;
-
     void sendDHEncryptedPacket(DHEncryptedPacket packet) {
-        if (sentPackets >= 5) {
-            refreshDHSharedKey();
-            sentPackets = 0;
-        }
-
         if (this.waitingForDHPublicKey) {
             awaitDHPublicKey().whenComplete((dhPublicKey, exception) -> {
                 sendDHEncryptedPacket(packet);
@@ -55,7 +47,6 @@ public class Connection {
 
         packet.encrypt(getSelfEndToEndEncryption());
         PacketTransmitter.sendPacket(packet, this);
-        sentPackets++;
     }
 
     public IDatagramSession getSession() {
@@ -84,11 +75,6 @@ public class Connection {
         getSelfEndToEndEncryption()
                 .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
         sendPacket(new DHRequestPacket(numberOfKeys, getSelfEndToEndEncryption().getPublicKey()));
-    }
-
-    public void refreshDHSharedKey() {
-        this.waitingForDHPublicKey = true;
-        sendPacket(new DHRefreshKeyPacket());
     }
 
     public void setOtherPublicKey(BigInteger otherPublicKey) {
