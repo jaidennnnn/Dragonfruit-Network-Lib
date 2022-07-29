@@ -41,6 +41,7 @@ public class Connection {
         if (this.waitingForDHPublicKey) {
             awaitDHPublicKey().whenComplete((dhPublicKey, exception) -> {
                 sendDHEncryptedPacket(packet);
+                System.out.println("sent encrypted packet");
             });
             return;
         }
