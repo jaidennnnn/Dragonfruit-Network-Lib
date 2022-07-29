@@ -27,6 +27,7 @@ public class PacketUtil {
         FSTObjectInput is = new FSTObjectInput(in);
         Packet packet = (Packet) is.readObject();
         is.close();
+        in.close();
         return packet;
     }
 }
