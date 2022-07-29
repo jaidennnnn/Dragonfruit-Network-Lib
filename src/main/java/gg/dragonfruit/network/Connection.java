@@ -70,11 +70,14 @@ public class Connection {
     }
 
     public void requestDHPublicKey() {
+        System.out.println("Requesting DH public key");
         this.waitingForDHPublicKey = true;
         BigInteger numberOfKeys;
         getSelfEndToEndEncryption()
                 .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
+        System.out.println("set Number of keys");
         sendPacket(new DHRequestPacket(numberOfKeys, getSelfEndToEndEncryption().getPublicKey()));
+        System.out.println("sent packet");
     }
 
     public void setOtherPublicKey(BigInteger otherPublicKey) {
