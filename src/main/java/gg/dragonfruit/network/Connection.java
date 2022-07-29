@@ -4,7 +4,8 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.SecureRandom;
-import java.util.concurrent.CompletableFuture;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.snf4j.core.session.IDatagramSession;
 
@@ -17,6 +18,7 @@ public class Connection {
     final InetSocketAddress socketAddress;
     IDatagramSession session;
     boolean waitingForDHPublicKey = true;
+    Queue<DHEncryptedPacket> encryptedPacketQueue = new ConcurrentLinkedQueue<>();
     EndToEndEncryption endToEndEncryption = new EndToEndEncryption();
 
     public Connection(InetAddress address, int port, IDatagramSession session) {
@@ -39,10 +41,7 @@ public class Connection {
 
     void sendDHEncryptedPacket(DHEncryptedPacket packet) {
         if (this.waitingForDHPublicKey) {
-            awaitDHPublicKey().whenComplete((dhPublicKey, exception) -> {
-                sendDHEncryptedPacket(packet);
-                System.out.println("sent encrypted packet");
-            });
+            encryptedPacketQueue.add(packet);
             return;
         }
 
@@ -62,28 +61,22 @@ public class Connection {
         return socketAddress.getPort();
     }
 
-    CompletableFuture<Void> awaitDHPublicKey() {
-        return CompletableFuture.runAsync(() -> {
-            while (waitingForDHPublicKey) {
-
-            }
-        });
-    }
-
     public void requestDHPublicKey() {
-        System.out.println("Requesting DH public key");
         this.waitingForDHPublicKey = true;
         BigInteger numberOfKeys;
         getSelfEndToEndEncryption()
                 .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
-        System.out.println("set Number of keys");
         sendPacket(new DHRequestPacket(numberOfKeys, getSelfEndToEndEncryption().getPublicKey()));
-        System.out.println("sent packet");
     }
 
     public void setOtherPublicKey(BigInteger otherPublicKey) {
         getSelfEndToEndEncryption().setOtherPublicKey(otherPublicKey);
         this.waitingForDHPublicKey = false;
+
+        DHEncryptedPacket packet;
+        while ((packet = encryptedPacketQueue.poll()) != null) {
+            sendDHEncryptedPacket(packet);
+        }
     }
 
     @Override
