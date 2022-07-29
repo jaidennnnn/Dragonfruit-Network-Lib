@@ -85,10 +85,8 @@ public class Connection {
         BigInteger numberOfKeys;
         getSelfEndToEndEncryption()
                 .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
-        BigInteger publicKey = getSelfEndToEndEncryption().getPublicKey();
-        sendPacket(new DHInitPacket(numberOfKeys, publicKey));
-        System.out.println(publicKey);
-
+        System.out.println(getSelfEndToEndEncryption().getNumberOfKeys());
+        sendPacket(new DHInitPacket(numberOfKeys, getSelfEndToEndEncryption().getPublicKey()));
     }
 
     public void setOtherPublicKey(BigInteger otherPublicKey) {
