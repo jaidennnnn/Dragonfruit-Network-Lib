@@ -10,11 +10,11 @@ public abstract class DHEncryptedPacket extends Packet {
     byte[] senderPublicKeyBytes = null;
 
     public void setSenderPublicKey(BigInteger senderPublicKey) {
-        this.senderPublicKeyBytes = senderPublicKey.toByteArray();
+        this.senderPublicKeyBytes = senderPublicKey == null ? null : senderPublicKey.toByteArray();
     }
 
     public BigInteger getSenderPublicKey() {
-        return new BigInteger(senderPublicKeyBytes);
+        return senderPublicKeyBytes == null ? null : new BigInteger(senderPublicKeyBytes);
     }
 
     public abstract void encrypt(EndToEndEncryption endToEndEncryption);

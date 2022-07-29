@@ -1,6 +1,7 @@
 package gg.dragonfruit.network;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
@@ -47,7 +48,12 @@ public class ClientHandler extends AbstractDatagramHandler {
         if (received instanceof DHEncryptedPacket) {
             DHEncryptedPacket encryptedPacket = (DHEncryptedPacket) received;
             EndToEndEncryption endToEndEncryption = serverConnection.getSelfEndToEndEncryption();
-            serverConnection.setOtherPublicKey(encryptedPacket.getSenderPublicKey());
+            BigInteger senderPublicKey = encryptedPacket.getSenderPublicKey();
+
+            if (senderPublicKey != null) {
+                serverConnection.setOtherPublicKey(encryptedPacket.getSenderPublicKey());
+            }
+
             endToEndEncryption.setSharedKey();
             encryptedPacket.decrypt(endToEndEncryption);
             encryptedPacket.confirmReceived(serverConnection);
