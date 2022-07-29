@@ -48,10 +48,6 @@ public class EndToEndEncryption {
             this.secretKey = new BigInteger(numberOfKeys.bitLength(), rand);
         }
 
-        if (!needsKeyExchange()) {
-            setSharedKey();
-        }
-
         return BigIntegerCache.SMALL_PRIME.modPow(secretKey, numberOfKeys);
     }
 

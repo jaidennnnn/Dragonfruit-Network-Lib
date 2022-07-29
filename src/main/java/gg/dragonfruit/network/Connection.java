@@ -5,12 +5,12 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.snf4j.core.session.IDatagramSession;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
+import gg.dragonfruit.network.packet.DHRefreshKeyPacket;
 import gg.dragonfruit.network.packet.DHRequestPacket;
 import gg.dragonfruit.network.packet.Packet;
 
@@ -18,7 +18,6 @@ public class Connection {
     final InetSocketAddress socketAddress;
     IDatagramSession session;
     boolean waitingForDHPublicKey = true;
-    AtomicInteger packetCountdown = new AtomicInteger(0);
     EndToEndEncryption endToEndEncryption = new EndToEndEncryption();
 
     public Connection(InetAddress address, int port, IDatagramSession session) {
@@ -39,22 +38,24 @@ public class Connection {
         PacketTransmitter.sendPacket(packet, this);
     }
 
+    int sentPackets = 0;
+
     void sendDHEncryptedPacket(DHEncryptedPacket packet) {
+        if (sentPackets >= 5) {
+            refreshDHSharedKey();
+            sentPackets = 0;
+        }
+
         if (getSelfEndToEndEncryption().needsKeyExchange()) {
-            requestDHPublicKey().whenComplete((dhPublicKey, exception) -> {
+            awaitDHPublicKey().whenComplete((dhPublicKey, exception) -> {
                 sendDHEncryptedPacket(packet);
             });
             return;
         }
 
-        packet.setSenderPublicKey(
-                packetCountdown.getAndIncrement() == 0 ? getSelfEndToEndEncryption().getPublicKey() : null);
         packet.encrypt(getSelfEndToEndEncryption());
         PacketTransmitter.sendPacket(packet, this);
-    }
-
-    public void encryptedPacketReceived() {
-        packetCountdown.getAndDecrement();
+        sentPackets++;
     }
 
     public IDatagramSession getSession() {
@@ -69,17 +70,25 @@ public class Connection {
         return socketAddress.getPort();
     }
 
-    CompletableFuture<Void> requestDHPublicKey() {
+    CompletableFuture<Void> awaitDHPublicKey() {
         return CompletableFuture.runAsync(() -> {
-            this.waitingForDHPublicKey = true;
-            BigInteger numberOfKeys;
-            getSelfEndToEndEncryption()
-                    .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
-            sendPacket(new DHRequestPacket(numberOfKeys));
             while (waitingForDHPublicKey) {
 
             }
         });
+    }
+
+    public void requestDHPublicKey() {
+        this.waitingForDHPublicKey = true;
+        BigInteger numberOfKeys;
+        getSelfEndToEndEncryption()
+                .setNumberOfKeys(numberOfKeys = BigInteger.probablePrime(4096, new SecureRandom()));
+        sendPacket(new DHRequestPacket(numberOfKeys, getSelfEndToEndEncryption().getPublicKey()));
+    }
+
+    public void refreshDHSharedKey() {
+        this.waitingForDHPublicKey = true;
+        sendPacket(new DHRefreshKeyPacket());
     }
 
     public void setOtherPublicKey(BigInteger otherPublicKey) {

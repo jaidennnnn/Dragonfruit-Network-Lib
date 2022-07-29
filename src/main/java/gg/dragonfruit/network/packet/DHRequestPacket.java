@@ -6,18 +6,21 @@ import gg.dragonfruit.network.Connection;
 
 public class DHRequestPacket extends Packet {
 
-    byte[] numberOfKeysByte;
+    byte[] numberOfKeysBytes;
+    byte[] publicKeyBytes;
 
-    public DHRequestPacket(BigInteger numberOfKeys) {
-        this.numberOfKeysByte = numberOfKeys.toByteArray();
+    public DHRequestPacket(BigInteger numberOfKeys, BigInteger publicKey) {
+        this.numberOfKeysBytes = numberOfKeys.toByteArray();
+        this.publicKeyBytes = publicKey.toByteArray();
     }
 
     @Override
     public void received(Connection connection) {
-        connection.getSelfEndToEndEncryption().setNumberOfKeys(new BigInteger(numberOfKeysByte));
+        connection.getSelfEndToEndEncryption().setNumberOfKeys(new BigInteger(numberOfKeysBytes));
+        connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
         connection.sendPacket(new DHPublicKeyPacket(
                 connection.getSelfEndToEndEncryption().getPublicKey()));
-
+        connection.getSelfEndToEndEncryption().setSharedKey();
     }
 
 }

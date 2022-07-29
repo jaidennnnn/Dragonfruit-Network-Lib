@@ -2,11 +2,11 @@ package gg.dragonfruit.network.packet;
 
 import gg.dragonfruit.network.Connection;
 
-public class DHReceivedEncryptedPacket extends Packet {
+public class DHRefreshKeyPacket extends Packet {
 
     @Override
     public void received(Connection connection) {
-        connection.encryptedPacketReceived();
+        connection.requestDHPublicKey();
     }
 
 }
