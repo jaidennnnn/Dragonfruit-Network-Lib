@@ -47,8 +47,8 @@ public class EndToEndEncryption {
     /**
      * Encrypts the given string.
      *
-     * @param string         the string to be encrypted.
-     * @param otherPublicKey the other user's public key.
+     * @param string the string to be encrypted.
+     *
      * @return the encrypted string.
      */
     public String encrypt(String string) {
@@ -59,11 +59,37 @@ public class EndToEndEncryption {
     /**
      * Decrypts the given string.
      *
-     * @param string         the string to be decrypted.
-     * @param otherPublicKey the other user's public key.
+     * @param string the string to be decrypted.
+     * 
      * @return the decrypted string.
      */
     public String decrypt(String string) {
+        return new String(new BigInteger(string).divide(this.sharedKey)
+                .toByteArray());
+    }
+
+    /**
+     * Encrypts the given string.
+     *
+     * @param string    the string to be encrypted.
+     * @param sharedKey the shared key to encrypt the string.
+     * 
+     * @return the encrypted string.
+     */
+    public String encrypt(String string, BigInteger sharedKey) {
+        return new BigInteger(string.getBytes())
+                .multiply(sharedKey).toString();
+    }
+
+    /**
+     * Decrypts the given string.
+     *
+     * @param string    the string to be decrypted.
+     * @param sharedKey the shared key to decrypt the string.
+     * 
+     * @return the decrypted string.
+     */
+    public String decrypt(String string, BigInteger sharedKey) {
         return new String(new BigInteger(string).divide(this.sharedKey)
                 .toByteArray());
     }
@@ -110,5 +136,9 @@ public class EndToEndEncryption {
 
     public BigInteger getNumberOfKeys() {
         return this.numberOfKeys;
+    }
+
+    public BigInteger getSharedKey() {
+        return this.sharedKey;
     }
 }
