@@ -23,7 +23,7 @@ public class EndToEndEncryption {
      */
     public void setOtherPublicKey(BigInteger otherPublicKey) {
         this.otherPublicKey = otherPublicKey;
-        this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
+        updateSharedKey();
         System.out.println(this.sharedKey.toString());
     }
 
@@ -43,6 +43,10 @@ public class EndToEndEncryption {
         }
 
         return BigIntegerCache.SMALL_PRIME.modPow(secretKey, numberOfKeys);
+    }
+
+    public void updateSharedKey() {
+        this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
     }
 
     /**

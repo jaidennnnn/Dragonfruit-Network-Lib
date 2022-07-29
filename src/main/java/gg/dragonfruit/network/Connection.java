@@ -41,12 +41,13 @@ public class Connection {
         PacketTransmitter.sendPacket(packet, this);
     }
 
-    long lastRefreshTime = 0;
+    long packetsSent = 0;
 
     void sendDHEncryptedPacket(DHEncryptedPacket packet, boolean newKey) {
 
-        if (newKey && System.currentTimeMillis() - lastRefreshTime > 60000) {
+        if (newKey && packetsSent > 5) {
             requestDHPublicKey();
+            packetsSent = 0;
         }
 
         if (this.waitingForDHPublicKey) {
@@ -56,6 +57,7 @@ public class Connection {
 
         packet.encrypt(getSelfEndToEndEncryption());
         PacketTransmitter.sendPacket(packet, this);
+        packetsSent++;
     }
 
     public IDatagramSession getSession() {
@@ -77,7 +79,9 @@ public class Connection {
 
     public void refreshDHSharedKey() {
         this.waitingForDHPublicKey = true;
-        sendPacket(new DHRefreshPacket(getSelfEndToEndEncryption().getPublicKey()));
+        BigInteger publicKey = getSelfEndToEndEncryption().getPublicKey();
+        getSelfEndToEndEncryption().updateSharedKey();
+        sendPacket(new DHRefreshPacket(publicKey));
     }
 
     public void initDH() {
@@ -100,8 +104,6 @@ public class Connection {
         while ((packet = encryptedPacketQueue.poll()) != null) {
             sendDHEncryptedPacket(packet, false);
         }
-
-        lastRefreshTime = System.currentTimeMillis();
     }
 
     @Override

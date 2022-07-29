@@ -16,9 +16,10 @@ public class DHInitPacket extends Packet {
     @Override
     public void received(Connection connection) {
         connection.getSelfEndToEndEncryption().setNumberOfKeys(new BigInteger(numberOfKeysBytes));
-        connection.sendPacket(new DHPublicKeyPacket(
-                connection.getSelfEndToEndEncryption().getPublicKey()));
+        BigInteger publicKey = connection.getSelfEndToEndEncryption().getPublicKey();
         connection.setOtherPublicKey(new BigInteger(publicKeyBytes));
+        connection.sendPacket(new DHPublicKeyPacket(publicKey));
+
     }
 
 }
