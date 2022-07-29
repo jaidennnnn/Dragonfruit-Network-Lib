@@ -29,10 +29,6 @@ public class EndToEndEncryption {
         this.sharedKey = this.otherPublicKey.modPow(secretKey, numberOfKeys);
     }
 
-    public boolean needsKeyExchange() {
-        return this.otherPublicKey == null;
-    }
-
     /**
      * Generates a new private key and uses it to calculate the public key. This key
      * should be sent to the other user and used to decrypt the message once
