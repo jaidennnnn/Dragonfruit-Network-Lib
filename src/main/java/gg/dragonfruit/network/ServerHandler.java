@@ -64,9 +64,10 @@ public class ServerHandler extends AbstractDatagramHandler {
         if (received instanceof DHEncryptedPacket) {
             DHEncryptedPacket encryptedPacket = (DHEncryptedPacket) received;
             EndToEndEncryption endToEndEncryption = connection.getSelfEndToEndEncryption();
-            endToEndEncryption.setOtherPublicKey(encryptedPacket.getSenderPublicKey());
+            connection.setOtherPublicKey(encryptedPacket.getSenderPublicKey());
             endToEndEncryption.setSharedKey();
             encryptedPacket.decrypt(endToEndEncryption);
+            encryptedPacket.confirmReceived(connection);
         }
 
         received.received(connection);

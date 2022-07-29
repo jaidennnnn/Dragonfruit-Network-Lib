@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.SecureRandom;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.snf4j.core.session.IDatagramSession;
 
@@ -17,6 +18,7 @@ public class Connection {
     final InetSocketAddress socketAddress;
     IDatagramSession session;
     boolean waitingForDHPublicKey = true;
+    AtomicInteger packetCountdown = new AtomicInteger(0);
     EndToEndEncryption endToEndEncryption = new EndToEndEncryption();
 
     public Connection(InetAddress address, int port, IDatagramSession session) {
@@ -45,9 +47,14 @@ public class Connection {
             return;
         }
 
-        packet.setSenderPublicKey(getSelfEndToEndEncryption().getPublicKey());
+        packet.setSenderPublicKey(
+                packetCountdown.getAndIncrement() == 0 ? getSelfEndToEndEncryption().getPublicKey() : null);
         packet.encrypt(getSelfEndToEndEncryption());
         PacketTransmitter.sendPacket(packet, this);
+    }
+
+    public void encryptedPacketReceived() {
+        packetCountdown.getAndDecrement();
     }
 
     public IDatagramSession getSession() {
