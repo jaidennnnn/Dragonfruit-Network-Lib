@@ -99,6 +99,7 @@ public class Connection {
 
     public void refreshedPublicKey() {
         this.waitingForDHPublicKey = false;
+        this.packetsSent = 0;
 
         DHEncryptedPacket packet;
         while ((packet = encryptedPacketQueue.poll()) != null) {
