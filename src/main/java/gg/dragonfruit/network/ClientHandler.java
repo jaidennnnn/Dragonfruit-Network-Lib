@@ -11,6 +11,7 @@ import org.snf4j.core.session.ISessionConfig;
 
 import gg.dragonfruit.network.encryption.EndToEndEncryption;
 import gg.dragonfruit.network.packet.DHEncryptedPacket;
+import gg.dragonfruit.network.packet.DHReceivedEncryptedPacket;
 import gg.dragonfruit.network.packet.Packet;
 import gg.dragonfruit.network.util.PacketUtil;
 
@@ -45,13 +46,19 @@ public class ClientHandler extends AbstractDatagramHandler {
             return;
         }
 
-        if (received instanceof DHEncryptedPacket) {
+        boolean encrypted = received instanceof DHEncryptedPacket;
+
+        if (encrypted) {
             DHEncryptedPacket encryptedPacket = (DHEncryptedPacket) received;
             EndToEndEncryption endToEndEncryption = serverConnection.getSelfEndToEndEncryption();
             encryptedPacket.decrypt(endToEndEncryption);
         }
 
         received.received(serverConnection);
+
+        if (encrypted) {
+            serverConnection.sendPacket(new DHReceivedEncryptedPacket());
+        }
     }
 
     @Override

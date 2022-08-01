@@ -41,13 +41,12 @@ public class Connection {
         PacketTransmitter.sendPacket(packet, this);
     }
 
-    long packetsSent = 0;
+    long pendingPackets = 0;
 
     void sendDHEncryptedPacket(DHEncryptedPacket packet, boolean newKey) {
 
-        if (newKey && packetsSent > 5) {
+        if (!this.waitingForDHPublicKey && newKey && pendingPackets == 0) {
             requestDHPublicKey();
-            packetsSent = 0;
         }
 
         if (this.waitingForDHPublicKey) {
@@ -57,7 +56,11 @@ public class Connection {
 
         packet.encrypt(getSelfEndToEndEncryption());
         PacketTransmitter.sendPacket(packet, this);
-        packetsSent++;
+        pendingPackets++;
+    }
+
+    public void receivedEncryptedPacket() {
+        pendingPackets--;
     }
 
     public IDatagramSession getSession() {
@@ -99,7 +102,6 @@ public class Connection {
 
     public void refreshedPublicKey() {
         this.waitingForDHPublicKey = false;
-        this.packetsSent = 0;
 
         DHEncryptedPacket packet;
         while ((packet = encryptedPacketQueue.poll()) != null) {
